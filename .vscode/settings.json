@@ -1,0 +1,13 @@
+{
+    "mocha.env": {"NODE_ENV":"test"},
+    "mocha.coverage": {
+        "enable": true,
+        "decoration": true,
+        "runWithInterval": false,
+        "autoUpdateInterval": 20000,
+        "activeOnStart": true,
+        "runAfterTest": true,
+        "runCoverageAfterFileSave": false,
+        "reporters": []
+    }
+}

@@ -1,0 +1,46 @@
+{
+  "development": {
+    "connector": [{
+      "id": "connector-server-1",
+      "host": "127.0.0.1",
+      "port": 9100,
+      "clientHost": "127.0.0.1",
+      "clientPort": 9110,
+      "frontend": true,
+      "args":" --inspect=6550 "
+    }],
+    "bjl": [{
+      "id": "bjl-server-1",
+      "host": "127.0.0.1",
+      "port": 9201
+    }],
+    "gate": [{
+      "id": "gate-server-1",
+      "host": "127.0.0.1",
+      "clientPort": 9115,
+      "frontend": true,
+      "args":" --inspect=6552 "
+    }]
+  },
+  "production": {
+    "connector": [{
+      "id": "connector-server-1",
+      "host": "127.0.0.1",
+      "port": 9100,
+      "clientHost": "127.0.0.1",
+      "clientPort": 9110,
+      "frontend": true
+    }],
+    "bjl": [{
+      "id": "bjl-server-1",
+      "host": "127.0.0.1",
+      "port": 9201
+    }],
+    "gate": [{
+      "id": "gate-server-1",
+      "host": "127.0.0.1",
+      "clientPort": 9115,
+      "frontend": true
+    }]
+  }
+}
