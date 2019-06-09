@@ -229,12 +229,16 @@ Baijiale.isPlayerDrawCard = function(playerCards = {}){
 Baijiale.isBankerDrawCard = function(playerCards = {},bankerCards = {}){
     let playerValue = this.calculateHandValue(playerCards);
     let bankerValue  = this.calculateHandValue(bankerCards);
-    let card3Value = this.valueForCard(playerCards[2]);
+    //天生天王 都停牌 不补牌
+    if(playerCards.length ==2 && playerValue >=8){
+        return false;
+    } 
     if(bankerValue < 2){
         return true;
     }
 
     if(playerCards.length==3){
+        let card3Value = this.valueForCard(playerCards[2]);
 
         if(bankerValue > 6){
             return false;

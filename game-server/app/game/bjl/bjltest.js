@@ -59,7 +59,7 @@ var banker = {
     cards:[]
 };
 
-
+var count = 0;
 log(cardPoolObj[0].join(','));
 
 
@@ -69,7 +69,14 @@ timeFsm.changeState(GameState.GAME_START,0);
 timeFsm.on(GameState.GAME_START+"Enter",function(){
     //log('gameStart',this.curState);
     log('游戏开始');
+    if(cardPoolObj[0].length <=7){
+        cardPoolObj[0] = getCardPool(0);
+    }
+
+
     log('发牌');
+    player.cards =[];
+    banker.cards = [];
     player.cards.push(getCard(0));
     banker.cards.push(getCard(0));
     player.cards.push(getCard(0));
@@ -98,8 +105,8 @@ timeFsm.on(GameState.GAME_CHECK+"Enter",function(){
         cardsToString(player);
     }
 
-    let isBanerDrawCard = Baijiale.isBankerDrawCard(player.cards,banker.cards);
-    if(isBanerDrawCard){
+    let isBankerDrawCard = Baijiale.isBankerDrawCard(player.cards,banker.cards);
+    if(isBankerDrawCard){
         banker.cards.push(getCard(0));
         cardsToString(banker);
     }
@@ -108,7 +115,23 @@ timeFsm.on(GameState.GAME_CHECK+"Enter",function(){
 });
 
 timeFsm.on(GameState.GAME_CALC+"Enter",function(){
+    playerValue =  Baijiale.calculateHandValue(player.cards);
+    bankerValue =  Baijiale.calculateHandValue(banker.cards);
+    log(`plalyer:${playerValue}  banker:${bankerValue}`);
     let ret = Baijiale.calculateAll(player.cards,banker.cards);
     log(ret);
     this.changeState(GameState.GAME_END,0);
 });
+
+
+timeFsm.on(GameState.GAME_END+"Enter",function(){
+    count++;
+    if(count>20){
+        return false;
+    }
+    log('\n');
+    log('next:下一局 5秒之后开始----------------------------');
+
+    this.changeState(GameState.GAME_START,10*1000);
+});
+
