@@ -81,26 +81,15 @@ function Hand(playerCards = [], bankerCards = []) {
 }
 
 
-function Baijiale(hand){
-    let result = {
-        outcome: GameResult.Tie,
-        natural: GameResult.NoNatural,
-        pair: GameResult.NoPair,
-    };
-
-    result.outcome = this.calculateOutcome(hand);
-    result.natural = this.calculateNatural(result.outcome, hand);
-    result.pair = this.calculatePairs(hand);
-
-    return result;
-
+function Baijiale(){
+    this.cardPool = this.getCardPool();
+    this.playerCards = [];
+    this.bankerCards = [];
 }
-
-
 /**
  * 计算赢家
  */
-Baijiale.calculateOutcome = function(playerCards = [], bankerCards = []) {
+Baijiale.prototype.calculateOutcome = function(playerCards = [], bankerCards = []) {
     let playerValue = this.calculateHandValue(playerCards);
     let bankerValue = this.calculateHandValue(bankerCards);
 
@@ -114,7 +103,7 @@ Baijiale.calculateOutcome = function(playerCards = [], bankerCards = []) {
 /**
  * 天生赢家
  */
-Baijiale.calculateNatural = function(outcome, playerCards = [], bankerCards = []) {
+Baijiale.prototype.calculateNatural = function(outcome, playerCards = [], bankerCards = []) {
     let cardsToCheck;
 
     switch (outcome) {
@@ -143,7 +132,7 @@ Baijiale.calculateNatural = function(outcome, playerCards = [], bankerCards = []
 /**
  * 计算庄闲对子
  */
-Baijiale.calculatePairs = function({playerCards = {}, bankerCards = {}}) {
+Baijiale.prototype.calculatePairs = function({playerCards = {}, bankerCards = {}}) {
     const isPlayerPair = this.calculatePair(playerCards);
     const isBankerPair = this.calculatePair(bankerCards);
 
@@ -160,7 +149,7 @@ Baijiale.calculatePairs = function({playerCards = {}, bankerCards = {}}) {
 /**
  * 计算对子
  */
-Baijiale.calculatePair = function(cards = []) {
+Baijiale.prototype.calculatePair = function(cards = []) {
     if (cards.length !== 2)
         return false;
 
@@ -172,7 +161,7 @@ Baijiale.calculatePair = function(cards = []) {
 /**
  * 手牌点数
  */
-Baijiale.calculateHandValue = function(cards = []) {
+Baijiale.prototype.calculateHandValue = function(cards = []) {
     let cardsValue = cards.reduce((handValue, card) => {
         return this.valueForCard(card) + handValue;
     }, 0);
@@ -180,7 +169,7 @@ Baijiale.calculateHandValue = function(cards = []) {
     return cardsValue % 10;
 }
 
-Baijiale.calculateAll = function(playerCards = {}, bankerCards = {}){
+Baijiale.prototype.calculateAll = function(playerCards = {}, bankerCards = {}){
     let ret = {
     }
     ret.pair = this.calculatePairs(playerCards,bankerCards);
@@ -189,7 +178,7 @@ Baijiale.calculateAll = function(playerCards = {}, bankerCards = {}){
     return ret;
 }
 
-Baijiale.valueForCard = function ({suit, value = 0}) {
+Baijiale.prototype.valueForCard = function ({suit, value = 0}) {
     switch (value) {
         case 'A': return 1;
         case '2': return 2;
@@ -209,7 +198,7 @@ Baijiale.valueForCard = function ({suit, value = 0}) {
     }
 }
 
-Baijiale.isPlayerDrawCard = function(playerCards = {}){
+Baijiale.prototype.isPlayerDrawCard = function(playerCards = {}){
     let playerValue = this.calculateHandValue(playerCards);
     if(playerCards.length==2){
 
@@ -226,7 +215,7 @@ Baijiale.isPlayerDrawCard = function(playerCards = {}){
     return false;
 }
 
-Baijiale.isBankerDrawCard = function(playerCards = {},bankerCards = {}){
+Baijiale.prototype.isBankerDrawCard = function(playerCards = {},bankerCards = {}){
     let playerValue = this.calculateHandValue(playerCards);
     let bankerValue  = this.calculateHandValue(bankerCards);
     //天生天王 都停牌 不补牌
@@ -266,6 +255,32 @@ Baijiale.isBankerDrawCard = function(playerCards = {},bankerCards = {}){
         return false;
     }
 }
+
+
+// 获取一副打乱排序的牌
+// 这个不包括大小王
+Baijiale.prototype.getCards() = function(){
+    var cards = [
+        'DK', 'DQ', 'DJ', 'D10', 'D9', 'D8', 'D7', 'D6', 'D5', 'D4', 'D3', 'D2', 'DA',
+        'CK', 'CQ', 'CJ', 'C10', 'C9', 'C8', 'C7', 'C6', 'C5', 'C4', 'C3', 'C2', 'CA',
+        'BK', 'BQ', 'BJ', 'B10', 'B9', 'B8', 'B7', 'B6', 'B5', 'B4', 'B3', 'B2', 'BA',
+        'AK', 'AQ', 'AJ', 'A10', 'A9', 'A8', 'A7', 'A6', 'A5', 'A4', 'A3', 'A2', 'AA'];
+    return _.shuffle(_.shuffle(cards));
+}
+
+// 获取牌池
+Baijiale.prototype.getCardPool = function() {
+    var cardPool = [];
+    for (let i = 0; i < 8; i++) {
+        cardPool = cardPool.concat(getCards());
+    }
+
+   // log('牌池：', cardPool.length, cardPool.toString());
+
+    return cardPool;
+}
+
+
 
 module.exports = {
     GameResult:GameResult,

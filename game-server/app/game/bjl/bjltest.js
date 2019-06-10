@@ -129,9 +129,10 @@ timeFsm.on(GameState.GAME_END+"Enter",function(){
     if(count>20){
         return false;
     }
+
+    this.changeState(GameState.GAME_START,10*1000);
     log('\n');
     log('next:下一局 5秒之后开始----------------------------');
 
-    this.changeState(GameState.GAME_START,10*1000);
 });
 

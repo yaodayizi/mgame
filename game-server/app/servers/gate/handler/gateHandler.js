@@ -60,7 +60,7 @@ handler.login = function(msg,session,next){
 	}catch(e){
 		next({code:500,err:e});
 	}
-	var token = jwt.sign({userid:userid},consts.jwtkey,{expiresInMinutes:60*60});
+	var token = jwt.sign({userid:userid},consts.jwtkey,{expiresInMinutes:60*36});
 	next(null,{
 		code:0,
 		userid:user.userid,
@@ -82,13 +82,10 @@ handler.guestLogin = function(msg,session,next){
 	user.password = '123456';
 	user.phone ='';
 	user.gold = 3000;
-	try{
-		var ret = await userDao.createUser(user);
-		user.userid = ret['insertId'];
-	}catch(e){
-		next({code:500,err:e});
-	}
-	var token = jwt.sign({userid:user.userid},consts.jwtkey,{expiresInMinutes:60*6});
+		//var ret = await userDao.createUser(user);
+		//user.userid = ret['insertId'];
+	user.userid = name;
+	var token = jwt.sign({userid:user.userid},consts.jwtkey,{expiresInMinutes:60*12});
 	next(null,{
 		code:0,
 		userid:user.userid,

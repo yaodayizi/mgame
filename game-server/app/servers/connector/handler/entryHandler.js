@@ -11,24 +11,27 @@ var Handler = function(app) {
 };
 
 
-Handler.prototype.login = function(msg,session,next){
-
-	//jwt.verify(token,scret);
-		//var sid = this.app.get("serverId");
-		//var channel = this.channelSevice.getChannel('hall',true);
-		//channel.add(session)
+Handler.prototype.enterGame = function(msg,session,next){
+		token = msg.token;
+		playerid = msg.playerid;
+		serverid = pomelo.app.get('serverid');
+		gameid = conts.ser('a=gma=ecishui ')
+		jwt.verify(token,scret);
 		var sessionService = this.app.get('sessionService');
-		//var oldSession = sessionService.getByUid(user.userid)
-		// if( !! oldSession) {
-		// 	sessionService.kick(res.mid, "您的账号在其他地方登录");
-		// }
+        if (sessionService.getByUid(playerid)) {
+            console.log('old player kick');
+            sessionService.kick(playerid, 'have login in another place!', function () {
+                console.log('kickCb');
+            });
+        }
 
-		this.sessionService.bind(user.userid);
-		this.sessionService.on('close',function(){
-			//用户离线
-		});
-		//todo:刷新token
-		var token = jwt.sign({userid:userid},consts.jwtkey,{expiresInMinutes:60*60});
+		session.bind(playerid);
+		session.set('playerId', playerId);
+        session.set('serverId', msg.serverId);
+		gameid = consts.gameList.bjl;
+
+		
+
 		next(null,{
 			code:200,
 			userid:user.userid,
@@ -36,7 +39,6 @@ Handler.prototype.login = function(msg,session,next){
 			nick_name:nick_name,
 			head:user.head,
 			gold:user.gold,
-			token:token
 		});
 
 }
