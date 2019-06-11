@@ -1,3 +1,4 @@
+const _ = require("lodash");
 
 function GameResult(){
 
@@ -72,12 +73,6 @@ Card.prototype.toString = function(){
         let suit = Card.StandardSuitUnicodeStrings[this.suit] || this.suit;
 
         return `Card ${suit} ${this.value}`;
-}
-
-
-function Hand(playerCards = [], bankerCards = []) {
-    this.playerCards = playerCards;
-    this.bankerCards = bankerCards;
 }
 
 
@@ -259,7 +254,7 @@ Baijiale.prototype.isBankerDrawCard = function(playerCards = {},bankerCards = {}
 
 // 获取一副打乱排序的牌
 // 这个不包括大小王
-Baijiale.prototype.getCards() = function(){
+Baijiale.prototype.getCards = function(){
     var cards = [
         'DK', 'DQ', 'DJ', 'D10', 'D9', 'D8', 'D7', 'D6', 'D5', 'D4', 'D3', 'D2', 'DA',
         'CK', 'CQ', 'CJ', 'C10', 'C9', 'C8', 'C7', 'C6', 'C5', 'C4', 'C3', 'C2', 'CA',
@@ -270,21 +265,25 @@ Baijiale.prototype.getCards() = function(){
 
 // 获取牌池
 Baijiale.prototype.getCardPool = function() {
-    var cardPool = [];
+    var cards = [];
     for (let i = 0; i < 8; i++) {
-        cardPool = cardPool.concat(getCards());
+        cards = cards.concat(this.getCards());
     }
 
    // log('牌池：', cardPool.length, cardPool.toString());
 
-    return cardPool;
+    return cards;
 }
 
-
+//获取一张牌
+Baijiale.prototype.getCard = function(){
+    let item = this.cardPool.shift();
+    let valueArr = _.toArray(item);
+    let suit = Card.mapping[valueArr[0]];
+    let value = item.substr(1);
+    return new Card(suit,value);
+}
 
 module.exports = {
-    GameResult:GameResult,
     Baijiale:Baijiale,
-    Card:Card,
-    Hand:Hand
 }

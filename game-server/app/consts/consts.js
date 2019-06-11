@@ -12,24 +12,24 @@ module.exports = {
                 GAME_END:"gameEnd"           
             },
             //下注时间
-            bet_time:15*1000,
+            bet_time:25*1000,
             //显示结果时间
             show_result_time:20*1000,
             roomConfig: [{
                 min_coin: 100,
                 max_coin: 0,
-                min_bet: 100,
-                max_bet: 1000
+                min_bet: 10,
+                max_bet: 80
             }, {
                 min_coin: 1000,
                 max_coin: 0,
-                min_bet: 1000,
-                max_bet: 10000
+                min_bet: 100,
+                max_bet: 800
             }, {
                 min_coin: 10000,
                 max_coin: 0,
                 min_bet: 1000,
-                max_bet: 100000
+                max_bet: 8000
             }],
             pos:{
                 BANKER:0,
@@ -40,6 +40,7 @@ module.exports = {
                 BOTH_PAIR:5,
                 BIG:6,
                 SMALL:7}
+            
             
         }
 

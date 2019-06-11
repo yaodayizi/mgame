@@ -12,4 +12,8 @@ exp.enterGame = function(msg,cb){
         roomList[roomid] = room;
         roomidArr.push(roomid);
     }
+
+    
+
+
 }

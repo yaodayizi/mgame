@@ -77,8 +77,8 @@ handler.guestLogin = function(msg,session,next){
 	var time = new Date().getTime();
 	var name = time + _.random(1111,9999,false);
 	console.log(name);
-	user.user_name = '游客'+name;
-	user.nick_name = "游客"+name;
+	user.user_name = 'G'+name;
+	user.nick_name = "G"+name;
 	user.password = '123456';
 	user.phone ='';
 	user.gold = 3000;
