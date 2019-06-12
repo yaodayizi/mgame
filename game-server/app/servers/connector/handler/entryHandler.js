@@ -1,7 +1,10 @@
 var pomelo = require('pomelo');
 var userDao = require("../../../dao/mysql/userDao.js");
+var redisUtil = require("../../../dao/redisUtil.js");
 var jwt = require("jsonwebtoken");
 var consts = require("../../../consts/consts.js");
+
+
 module.exports = function(app) {
   return new Handler(app);
 };
@@ -10,36 +13,56 @@ var Handler = function(app) {
 	this.app = app;
 };
 
-
+/**
+ * @param  {token,gameType} msg
+ * @param  {} session
+ * @param  {} next
+ */
 Handler.prototype.enterGame = function(msg,session,next){
-		token = msg.token;
-		playerid = msg.playerid;
-		serverid = pomelo.app.get('serverid');
-		gameid = conts.ser('a=gma=ecishui ')
-		jwt.verify(token,scret);
+		let token = msg.token;
+		let serverid = pomelo.app.get('serverid');
+		let gameid = conts.gameList[msg.gameType];
+		try{
+			let decode = jwt.verify(token,consts.jwtkey);
+		}catch(e){
+			next(null,{code:500,msg:e.msg});
+		}
+		msg.uid = decode.uid;
+		//msg.isTraveller = decode.isTraveller;
 		var sessionService = this.app.get('sessionService');
-        if (sessionService.getByUid(playerid)) {
+        if (sessionService.getByUid(uid)) {
             console.log('old player kick');
-            sessionService.kick(playerid, 'have login in another place!', function () {
+            sessionService.kick(uid, 'have login in another place!', function () {
                 console.log('kickCb');
             });
         }
 
-		session.bind(playerid);
-		session.set('playerId', playerId);
-        session.set('serverId', msg.serverId);
-		gameid = consts.gameList.bjl;
-
+		session.bind(uid);
+		session.set('uid', uid);
+		session.set('serverId', serverId);
 		
 
-		next(null,{
+		this.app.rpc.bjl.gameRemote.enterGame(msg,function(err,data){
+			if(err){
+				next({code:500,err:err.msg});
+			}else{
+				
+				session.set('roomid',data.roomid);
+				session.set('gameid',data.gameid);
+				session.pull();
+				next(null,data);
+
+			}
+		});
+
+/* 		next(null,{
 			code:200,
 			userid:user.userid,
 			user_name:user.user_name,
 			nick_name:nick_name,
 			head:user.head,
 			gold:user.gold,
-		});
+		}); */
 
 }
 
@@ -48,9 +71,57 @@ Handler.prototype.travellerLogin = function(msg,session,next){
 }
 
 
-Handler.prototype.enterGame = function(msg,session,next){
+handler.login = function(msg,session,next){
+	if(!msg.username|| !msg.pasword){
+		next({code:500,msg:'请填写用户名密码'});	
+	}
+	try{
+		var user = userDao.login(msg.username,msg.password);
+		if(user === false){
+			next({code:500,msg:'用户名密码错误'});
+		}
+	}catch(e){
+		next({code:500,err:e});
+	}
+	var token = jwt.sign({userid:userid,isTraveller:false},consts.jwtkey,{expiresInMinutes:60*36});
+	var ret = {
+		userid:user.userid,
+		user_name:user.user_name,
+		nick_name:nick_name,
+		head:user.head,
+		gold:user.gold
+	}
+	redisUtil.setUserData(ret);
+	ret.token = token;
+	next(null,{
+		code:200,
+		data:{user:ret}
+	});
+};
 
+handler.guestLogin = function(msg,session,next){
+	
+	var time = new Date().getTime();
+	var name = time + _.random(1111,9999,false);
+	console.log(name);
+	user.user_name = 'G'+name;
+	user.nick_name = "G"+name;
+	user.head = "";
+	user.password = '123456';
+	user.phone ='';
+	user.gold = 3000;
+		//var ret = await userDao.createUser(user);
+		//user.userid = ret['insertId'];
+	user.userid = name;
+	redisUtil.setUserData(ret);
+	var token = jwt.sign({userid:user.userid,isTraveller:true},consts.jwtkey,{expiresInMinutes:60*12});
+	user.token = token;
+	next(null,{
+		code:200,
+		data:{user:user}
+	});
 }
+
 
 /**
  * New client entry.

@@ -20,7 +20,7 @@ Room.prototype.addPlayer = function (token, serverid, cb = null) {
     ret = {};
     this.channel.pushMessage('onPlayerEnter', ret, cb);
     this.playerList.push();
-
+    
 }
 
 Room.prototype.kclick = function (uid, serverid, cb = null1) {

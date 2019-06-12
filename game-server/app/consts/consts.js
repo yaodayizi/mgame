@@ -1,7 +1,7 @@
 module.exports = {
         jwtkey: "SDF678SDFasdf2345",
         gameList: {
-            "bjl": 1000
+            1000:"bjl"
         },
         bjl: {
             gameState:{

@@ -13,7 +13,7 @@ exp.enterGame = function(msg,cb){
         roomidArr.push(roomid);
     }
 
-    
+    //需要返回路书数据
 
 
 }

@@ -3,6 +3,7 @@
     "version": "0.0.1",
     "private": false,
     "dependencies": {
+        "async-redis": "^1.1.7",
         "jsonwebtoken": "^8.5.1",
         "moment": "^2.24.0",
         "mysql": "^2.17.1",
