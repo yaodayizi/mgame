@@ -2,9 +2,11 @@ var pomelo = require("pomelo");
 var crypto = require("crypto");
 var userDao = module.exports;
 var log = require('pomelo-logger').getLogger('dao-log', __filename);
-if(process.env.NODE_ENV == 'production' || process.env.NODE_ENV === 'development'){
-    userDao.db = pomelo.app.get('dbClient').create();
-}
+var self = this;
+//if(process.env.NODE_ENV == 'production' || process.env.NODE_ENV === 'development'){
+    userDao.db = pomelo.app.get('dbclient');
+    console.log(userDao,pomelo.app.get('dbclient'));
+//}
 userDao.login = async function(username,password){
     var sql = "select * from t_user where user_name = ?  limit 0,1";
     try{

@@ -11,6 +11,8 @@ exp.enterGame = function(msg,cb){
         room = new room(roomid,msg.gameid);
         roomList[roomid] = room;
         roomidArr.push(roomid);
+    }else{
+        
     }
 
     //需要返回路书数据

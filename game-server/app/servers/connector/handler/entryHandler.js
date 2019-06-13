@@ -71,27 +71,27 @@ Handler.prototype.travellerLogin = function(msg,session,next){
 }
 
 
-handler.login = function(msg,session,next){
-	if(!msg.username|| !msg.pasword){
+Handler.prototype.login = async function(msg,session,next){
+	if(!msg.username|| !msg.password){
 		next({code:500,msg:'请填写用户名密码'});	
 	}
 	try{
-		var user = userDao.login(msg.username,msg.password);
+		var user = await userDao.login(msg.username,msg.password);
 		if(user === false){
 			next({code:500,msg:'用户名密码错误'});
 		}
 	}catch(e){
 		next({code:500,err:e});
 	}
-	var token = jwt.sign({userid:userid,isTraveller:false},consts.jwtkey,{expiresInMinutes:60*36});
+	var token = jwt.sign({userid:user.userid,isTraveller:false},consts.jwtkey,{expiresIn:'36h'});
 	var ret = {
 		userid:user.userid,
 		user_name:user.user_name,
-		nick_name:nick_name,
+		nick_name:user.nick_name,
 		head:user.head,
 		gold:user.gold
 	}
-	redisUtil.setUserData(ret);
+	let result = await redisUtil.setUserAsync(ret);
 	ret.token = token;
 	next(null,{
 		code:200,
@@ -99,7 +99,7 @@ handler.login = function(msg,session,next){
 	});
 };
 
-handler.guestLogin = function(msg,session,next){
+Handler.prototype.guestLogin = async function(msg,session,next){
 	
 	var time = new Date().getTime();
 	var name = time + _.random(1111,9999,false);
@@ -113,8 +113,8 @@ handler.guestLogin = function(msg,session,next){
 		//var ret = await userDao.createUser(user);
 		//user.userid = ret['insertId'];
 	user.userid = name;
-	redisUtil.setUserData(ret);
-	var token = jwt.sign({userid:user.userid,isTraveller:true},consts.jwtkey,{expiresInMinutes:60*12});
+	let result = await redisUtil.setUserAsync(ret);
+	var token = jwt.sign({userid:user.userid,isTraveller:true},consts.jwtkey,{expiresIn:'5h'});
 	user.token = token;
 	next(null,{
 		code:200,

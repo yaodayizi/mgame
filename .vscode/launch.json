@@ -23,7 +23,7 @@
             "type": "node",
             "request": "attach",
             "name": "Attach",
-            "port": 6552
+            "port": 6558
         },
         {
             "type": "node",
@@ -37,6 +37,13 @@
             "request": "launch",
             "name": "Launch Program",
             "program": "${file}"
+        },
+
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "pomelo start",
+            "program": "pomelo start"
         }
     ]
 }

@@ -1,4 +1,4 @@
-var roomManager = require('../../../services/bjl/roomManager');
+var roomManager = require('../../../game/bjl/roomManager.js');
 
 module.exports = function (app) {
     return new GameRemote(app);

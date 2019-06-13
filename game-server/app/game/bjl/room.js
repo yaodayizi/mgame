@@ -1,30 +1,41 @@
 const pomelo = require("pomelo");
-const simpleFsm = require("./SimpleFsm.js");
+const SimpleFsm = require("./SimpleFsm.js");
 const config = require("../../../app/consts/consts.js");
 const Baijiale = require("../bjl/bjl.js");
-const playerList = [];
+const redisUtil = require("../../dao/redisUtil.js");
+var logger = require('pomelo-logger').getLogger('room', pomelo.app.serverId).info;
+var bankerLog = require('pomelo-logger').getLogger('banker', pomelo.app.serverId).info;
+var playerLogger = require('pomelo-logger').getLogger('player', pomelo.app.serverId).info;
+
+const playerList = {};
 const betList = {};
 const GameState = config.GameState;
+var timeFsm = new SimpleFsm();
 
 function Room(roomid, gameid) {
-
+    this.roomid = roomid;
     this.channelService = pomelo.app.get('channelService');
     let channelName = 'room_' + this.gameId + '_' + this.roomId;
     this.channel = this.channelService.getChannel(channelName, true);
-    
+    this.initGame();
 }
 
-Room.prototype.addPlayer = function (token, serverid, cb = null) {
+Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
     //todo:检测player是否在某个房间
     this.channel.add(uid, serverid);
-    ret = {};
+    let user = await redisUtil.getUserAsync(uid);
+    user.roomid = this.roomid;
+    user.serverid = serverid;
+    ret = {user:user};
     this.channel.pushMessage('onPlayerEnter', ret, cb);
-    this.playerList.push();
-    
+    this.playerList[uid] = user;
 }
 
-Room.prototype.kclick = function (uid, serverid, cb = null1) {
+Room.prototype.kclick = async function (uid, serverid, cb = null1) {
     this.channe.leave(uid, serverid);
+    let ret = await redisUtil.setUserAsync({userid:uid,roomid:0,serverid:0});
+    delete this.playerList[uid];
+
     this.channel.pushMessage('onPlayerLeave', {
         uid: uid
     }, null);
@@ -45,7 +56,7 @@ Room.prototype.bet = function (uid, pos, coin, cb = null) {
 }
 
 Room.prototype.initGame = function () {
-    var timeFsm = new SimpleFsm();
+    
     var baijiale = new Baijiale();
 
     var playerCards = baijiale.playerCards;
@@ -74,7 +85,7 @@ Room.prototype.initGame = function () {
 
     timeFsm.on(GameState.GAME_BET + "Enter", function () {
         log('下注时间');
-        this.pushMessage(GameState.GAME_BET + "Enter", null, null);
+        this.pushMessage(GameState.GAME_BET + "Enter", {bet_time:consts.bjl.bet_time}, null);
         this.changeState(GameState.GAME_CHECK, consts.bjl.bet_time * 1000);
     });
 
@@ -136,6 +147,13 @@ Room.prototype.initGame = function () {
     });
 }
 
+Room.isCanBet = function(){
+    return simpleFsm.getState() == GameState.GAME_BET
+}
+
+Room.getGameState = function(){
+    simpleFsm.getState();
+}
 
 
 function cardsToString(cards) {

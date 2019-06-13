@@ -1,4 +1,4 @@
-const redisUtils = require("../app/utils/redisUtils.js");
+const redisUtils = require("../app/dao/redisUtil");
 var chai = require("chai"),
     expect = chai.expect,
     should = chai.should;

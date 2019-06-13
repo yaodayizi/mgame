@@ -5,7 +5,7 @@ var mqlMgr = {};
 mqlMgr.create = function() {
     if(process.env.NODE_ENV == 'production' || process.env.NODE_ENV === 'development'){
         var mysqlConfig = pomelo.app.get('mysql');
-    }else if(process.env.NODE_ENV == 'test'){
+    }else {
         var mysqlConfig =  {
             "host" : "127.0.0.1",
               "port" : "3306",

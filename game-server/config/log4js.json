@@ -104,7 +104,57 @@
       ,"backups": 5,
       "category":"dao"
 
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/room.log",
+      "maxLogSize": 1368709120,
+      "backups": 5,
+      "category":"room"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/game.log",
+      "maxLogSize": 1368709120,
+      "backups": 5,
+      "category":"game"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/bidResult.log",
+      "maxLogSize": 1368709120,
+      "backups": 5,
+      "category":"bidResult"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/player.log",
+      "maxLogSize": 1368709120,
+      "backups": 5,
+      "category":"player"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/coin.log",
+      "maxLogSize": 1368709120,
+      "backups": 5,
+      "category":"coin"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/exception.log",
+      "maxLogSize": 1368709120,
+      "backups": 5,
+      "category":"exception"
+    },
+    {
+      "type": "file",
+      "filename": "${opts:base}/logs/banker.log",
+      "maxLogSize": 1368709120,
+      "backups": 5,
+      "category":"banker"
     }
+
   ],
 
   "levels": {

@@ -6,68 +6,66 @@ var pomelo = require('pomelo');
 var logger = require('pomelo-logger').getLogger(__filename);
 
 var redisUtil = module.exports;
-const { promisify } = require('util');
 
 
 
 
-
+redisUtil.client = null;
+redisUtil.asyncClient = null;
+redisUtil.userKeyPre = 'users_';
 /**
  * 创建redis客户端
  *
  */
-redisUtil.create = function() {
+redisUtil.create = function(config) {
 
-	var config = redisConfig.development;
 	if(redisUtil.client){
-		return redisUtil.client;
+		return ;
 	}
-    client = redis.createClient(config.port, config.host, {});
+    redisUtil.client = redis.createClient(config.port, config.host, {});
 
-    client.on("connect", function () {
+    redisUtil.client.on("connect", function () {
         logger.info("redis connected");
     });
 
-    client.on("error", function (err) {
+    redisUtil.client.on("error", function (err) {
         logger.error("Redis:Error:" + err);
-    });
-
-    return client;
+	});
+	redisUtil.asyncClient = asyncRedis.decorate(redisUtil.client)
 };
 
 
-redisUtil.setUserData = function(userData,cb){
-	redisUtil.client.hmset(userData.userid,userData,cb);
+redisUtil.setUser = function(userData,cb){
+	redisUtil.client.hmset(redisUtil.userKeyPre + userData.userid,userData,cb);
 }
 
 
-redisUtil.getUserData = function(uid,cb){
-	redisUtil.client.hgetall(uid,cb);
+redisUtil.getUser = function(uid,cb){
+	redisUtil.client.hgetall(redisUtil.userKeyPre + uid,cb);
 }
 
-redisUtil.client = redisUtil.create();
-const asyncRedisClient = asyncRedis.decorate(client);
 
 
 
-async function setUser(data){
-	return await asyncRedisClient.hmset('0000',data);
+redisUtil.setUserAsync = async function(userData){
+	return await redisUtil.asyncClient.hmset(redisUtil.userKeyPre + userData.userid,userData);
 }
 
-async function getUser(uid){
-	return await asyncRedisClient.hgetall('0000');
+redisUtil.getUserAsync = async function (uid){
+	return await redisUtil.asyncClient.hgetall(redisUtil.userKeyPre + uid);
 }
 
-/* redisUtil.client.set('products','aaa',async function(err,res){
-	let aa = await getValue();
-	console.log(aa);
-	
-}); */
+redisUtil.create(redisConfig.development);
 
-let setRet =  setUser({name:'bbb',age:22});
-console.log(setRet);
-let user =  getUser('0000');
-console.log(user);
+/* async function test(){
+	let setRet = await redisUtil.setUserAsync({name:'bbb',age:22});
+	console.log(setRet);
+ 	let user = await  redisUtil.getUserAsync('0000');
+	console.log(user);
+}
+
+test(); */
+
 
 /*  redisUtil.setUserData({
 	userid:'user_1231424',
@@ -103,11 +101,11 @@ redisUtil.setUserData({
 	
 }); */
 
-redisUtil.getUserData('user_12314246',function(err,res){
+/* redisUtil.getUserData('user_12314246',function(err,res){
 	if(err){
 		logger.err(err);
 	}else{
 		console.log(res);
 	}
-});
+}); */
 

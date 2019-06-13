@@ -27,5 +27,9 @@ SimpleFsm.prototype.changeState = function(state,time){
     this.timeoutID = setTimeout(this.__changeState.bind(this),time,state);
 }
 
+SimpleFsm.prototype.getState = function(){
+    return trhis.curState;
+}
+
 module.exports = SimpleFsm;
 
