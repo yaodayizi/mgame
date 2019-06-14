@@ -76,7 +76,7 @@ Card.prototype.toString = function(){
 }
 
 
-function Baijiale(){
+var  Baijiale = function(){
     this.cardPool = this.getCardPool();
     this.playerCards = [];
     this.bankerCards = [];
@@ -284,6 +284,4 @@ Baijiale.prototype.getCard = function(){
     return new Card(suit,value);
 }
 
-module.exports = {
-    Baijiale:Baijiale,
-}
+module.exports = Baijiale;

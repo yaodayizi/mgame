@@ -1,7 +1,7 @@
 const EventEmitter = require("events").EventEmitter;
 const _ = require("lodash");
 const SimpleFsm = require("./SimpleFsm.js");
-const {GameResult,Baijiale,Card,Hand} = require("./bjl.js");
+const Baijiale = require("./bjl.js");
 const GameState = {
     GAME_START:"gamestart",
     GAME_BET:"gameBet",
@@ -53,7 +53,7 @@ timeFsm.on(GameState.GAME_START+"Enter",function(){
 
 timeFsm.on(GameState.GAME_BET+"Enter",function(){
     log('下注时间');
-    this.changeState(GameState.GAME_CHECK,2*1000);
+    this.changeState(GameState.GAME_CHECK,5*1000);
 });
 
 timeFsm.on(GameState.GAME_BET+"Leava",function(){

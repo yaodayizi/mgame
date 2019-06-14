@@ -7,8 +7,21 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Attach",
-            "port": 6550
+            "name": "Attach by Process ID",
+            "processId": "${command:PickProcess}"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach bjl",
+            "protocol": "inspector",
+            "port": 6553
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach connector",
+            "port": 6550 
         },
     {
         "type": "node",

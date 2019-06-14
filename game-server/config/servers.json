@@ -12,7 +12,8 @@
     "bjl": [{
       "id": "bjl-server-1",
       "host": "127.0.0.1",
-      "port": 9201
+      "port": 9201,
+      "args":" --inspect=6553 "
     }],
     "gate": [{
       "id": "gate-server-1",

@@ -20,14 +20,18 @@ var Handler = function(app) {
  */
 Handler.prototype.enterGame = function(msg,session,next){
 		let token = msg.token;
-		let serverid = pomelo.app.get('serverid');
-		let gameid = conts.gameList[msg.gameType];
+		let serverid = pomelo.app.getServerId();
+		let gameid = consts.gameList[msg.gameType];
+		let decode;
 		try{
-			let decode = jwt.verify(token,consts.jwtkey);
+			decode = jwt.verify(token,consts.jwtkey);
 		}catch(e){
 			next(null,{code:500,msg:e.msg});
 		}
-		msg.uid = decode.uid;
+		let uid = decode.userid;
+		msg.uid = uid;
+		msg.serverid = serverid;
+		msg.gameid = gameid;
 		//msg.isTraveller = decode.isTraveller;
 		var sessionService = this.app.get('sessionService');
         if (sessionService.getByUid(uid)) {
@@ -39,12 +43,12 @@ Handler.prototype.enterGame = function(msg,session,next){
 
 		session.bind(uid);
 		session.set('uid', uid);
-		session.set('serverId', serverId);
+		session.set('serverid', serverid);
 		
 
-		this.app.rpc.bjl.gameRemote.enterGame(msg,function(err,data){
+		this.app.rpc.bjl.gameRemote.enterGame(session,msg,function(err,data){
 			if(err){
-				next({code:500,err:err.msg});
+				next(null,{code:500,err:err.msg});
 			}else{
 				
 				session.set('roomid',data.roomid);

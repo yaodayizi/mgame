@@ -1,23 +1,23 @@
 const pomelo = require("pomelo");
+const _ = require("lodash");
 const SimpleFsm = require("./SimpleFsm.js");
-const config = require("../../../app/consts/consts.js");
-const Baijiale = require("../bjl/bjl.js");
+var consts = require("../../consts/consts.js");
+const Baijiale = require("./bjl.js");
 const redisUtil = require("../../dao/redisUtil.js");
 var logger = require('pomelo-logger').getLogger('room', pomelo.app.serverId).info;
 var bankerLog = require('pomelo-logger').getLogger('banker', pomelo.app.serverId).info;
 var playerLogger = require('pomelo-logger').getLogger('player', pomelo.app.serverId).info;
 
-const playerList = {};
-const betList = {};
-const GameState = config.GameState;
 var timeFsm = new SimpleFsm();
-
-function Room(roomid, gameid) {
+var log =console.log
+var Room = function(roomid, gameid) {
     this.roomid = roomid;
     this.channelService = pomelo.app.get('channelService');
-    let channelName = 'room_' + this.gameId + '_' + this.roomId;
+    let channelName = 'room_' + gameid + '_' + roomid;
     this.channel = this.channelService.getChannel(channelName, true);
-    this.initGame();
+    this.playerList = {};
+    this.betList = {};
+    
 }
 
 Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
@@ -27,8 +27,9 @@ Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
     user.roomid = this.roomid;
     user.serverid = serverid;
     ret = {user:user};
-    this.channel.pushMessage('onPlayerEnter', ret, cb);
+    this.channel.pushMessage('playerEnter', ret);
     this.playerList[uid] = user;
+    cb(user);
 }
 
 Room.prototype.kclick = async function (uid, serverid, cb = null1) {
@@ -36,7 +37,7 @@ Room.prototype.kclick = async function (uid, serverid, cb = null1) {
     let ret = await redisUtil.setUserAsync({userid:uid,roomid:0,serverid:0});
     delete this.playerList[uid];
 
-    this.channel.pushMessage('onPlayerLeave', {
+    this.channel.pushMessage('playerLeave', {
         uid: uid
     }, null);
 
@@ -58,14 +59,16 @@ Room.prototype.bet = function (uid, pos, coin, cb = null) {
 Room.prototype.initGame = function () {
     
     var baijiale = new Baijiale();
+    var GameState = consts.bjl.gameState;
 
     var playerCards = baijiale.playerCards;
     var bankerCards = baijiale.bankerCards;
+    var self = this;
     timeFsm.changeState(GameState.GAME_START, 0);
     timeFsm.on(GameState.GAME_START + "Enter", function () {
         //log('gameStart',this.curState);
         log('游戏开始');
-        this.channe.pushMessage(GameState.GAME_START, null, null);
+        self.channel.pushMessage(GameState.GAME_START, {gameState:GameState.GAME_START}, null);
         if (baijiale.cardPool.length <= 7) {
             baijiale.cardPool = baijiale.baijiale.getCardPool();
         }
@@ -85,20 +88,20 @@ Room.prototype.initGame = function () {
 
     timeFsm.on(GameState.GAME_BET + "Enter", function () {
         log('下注时间');
-        this.pushMessage(GameState.GAME_BET + "Enter", {bet_time:consts.bjl.bet_time}, null);
+        self.channel.pushMessage(GameState.GAME_BET + "Enter", {bet_time:consts.bjl.bet_time}, null);
         this.changeState(GameState.GAME_CHECK, consts.bjl.bet_time * 1000);
     });
 
     timeFsm.on(GameState.GAME_BET + "Leava", function () {
         log("下注结束");
-        this.pushMessage(GameState.GAME_BET + "Leava", null, null);
+        self.channel.pushMessage(GameState.GAME_BET + "Leava", {msg:'bet_end'}, null);
     });
 
     timeFsm.on(GameState.GAME_CHECK + "Enter", function () {
         log("检查牌");
         //cardsToString(player);
         //cardsToString(banker);
-        let isplayerDrawCard = Baijiale.isPlayerDrawCard(playerCards);
+        let isplayerDrawCard = baijiale.isPlayerDrawCard(playerCards);
         if (isplayerDrawCard) {
             playerCards.push(baijiale.getCard());
             cardsToString(playerCards);
@@ -114,7 +117,7 @@ Room.prototype.initGame = function () {
     });
 
     timeFsm.on(GameState.GAME_CALC + "Enter", function () {
-
+        this.changeState(GameState.GAME_END, 0);
     });
 
 
@@ -136,8 +139,7 @@ Room.prototype.initGame = function () {
                 banker: bankerValue
             }
         }
-        this.changeState(GameState.GAME_END, 0);
-        this.pushMessage(GameState.GameState.GAME_END + "Enter",res, null);
+        self.channel.pushMessage(GameState.GAME_END,res, null);
 
 
         this.changeState(GameState.GAME_START, consts.bjl.show_result_time * 1000);
@@ -147,13 +149,16 @@ Room.prototype.initGame = function () {
     });
 }
 
+
 Room.isCanBet = function(){
     return simpleFsm.getState() == GameState.GAME_BET
 }
 
 Room.getGameState = function(){
-    simpleFsm.getState();
+    return simpleFsm.getState();
 }
+
+module.exports = Room;
 
 
 function cardsToString(cards) {

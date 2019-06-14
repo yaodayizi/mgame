@@ -11,7 +11,7 @@ var GameRemote = function (app) {
 
 /*
  * 用户进入游戏
- * in: msg: {serverId, uid, token, gameId, playerName, isRobot, ip}
+ * in: msg: {serverid, uid, token, gameid, playerName, isRobot, ip}
  */
 GameRemote.prototype.enterGame = function (msg, cb) {
     console.log('gameRemote.enterGame caught ------------------');
