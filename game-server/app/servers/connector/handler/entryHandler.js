@@ -77,12 +77,12 @@ Handler.prototype.travellerLogin = function(msg,session,next){
 
 Handler.prototype.login = async function(msg,session,next){
 	if(!msg.username|| !msg.password){
-		next({code:500,msg:'请填写用户名密码'});	
+		next({code:500,err:{msg:'请填写用户名密码'}});	
 	}
 	try{
 		var user = await userDao.login(msg.username,msg.password);
 		if(user === false){
-			next({code:500,msg:'用户名密码错误'});
+			next({code:500,err:{msg:'用户名密码错误'}});
 		}
 	}catch(e){
 		next({code:500,err:e});

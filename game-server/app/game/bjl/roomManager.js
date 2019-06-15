@@ -12,12 +12,12 @@ exp.enterGame = function(msg,cb){
         room = new Room(roomid,msg.gameid);
         roomList[roomid] = room;
         roomidArr.push(roomid);
-
+        room.initGame();
     }else{
         
     }
     room.addPlayer(msg.uid,msg.serverid,function(ret){
-        room.initGame();
+        
         cb(null,{code:200,data:{user:ret}});
     
     });

@@ -70,7 +70,7 @@ Room.prototype.initGame = function () {
         log('游戏开始');
         self.channel.pushMessage(GameState.GAME_START, {gameState:GameState.GAME_START}, null);
         if (baijiale.cardPool.length <= 7) {
-            baijiale.cardPool = baijiale.baijiale.getCardPool();
+            baijiale.cardPool = baijiale.getCardPool();
         }
 
         playerCards = [];
