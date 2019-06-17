@@ -53,9 +53,10 @@ Handler.prototype.enterGame = function(msg,session,next){
 				
 				session.set('roomid',data.roomid);
 				session.set('gameid',data.gameid);
+				session.on('closed', onPlayerLeave.bind(null, self.app));
 				session.pull();
 				next(null,data);
-
+				console.log('join game ',data);
 			}
 		});
 
@@ -70,6 +71,39 @@ Handler.prototype.enterGame = function(msg,session,next){
 
 }
 
+var onPlayerLeave = function (app, session) {
+
+    console.log('用户离开 entryHandler.js onPlayerLeave .......................');
+
+    var sessionService = app.get('sessionService');
+
+    // log(sessionService.service.uidMap);
+
+    if (!session || !session.uid) {
+        console.log('return;');
+        return;
+    }
+
+    var gameid = session.get('gameid'),
+        roomid = session.get('roomid'),
+        uid = session.get('uid'),
+        serverid = session.get('serverid');
+
+		var data = {
+			gameid,
+			roomid,
+			uid,
+			serverid
+		};
+    app.rpc.bjl.gameRemote.kick(session, data, function() {
+        console.log('caught kickPlayer callback.................');
+        console.warn('玩家 ' + data.playerId + ' 的连接断开了！');
+    });
+
+};
+
+
+
 Handler.prototype.travellerLogin = function(msg,session,next){
 
 }
@@ -77,30 +111,34 @@ Handler.prototype.travellerLogin = function(msg,session,next){
 
 Handler.prototype.login = async function(msg,session,next){
 	if(!msg.username|| !msg.password){
-		next({code:500,err:{msg:'请填写用户名密码'}});	
+		next(null,{code:500,err:{msg:'请填写用户名密码'}});	
 	}
 	try{
 		var user = await userDao.login(msg.username,msg.password);
-		if(user === false){
-			next({code:500,err:{msg:'用户名密码错误'}});
-		}
+
 	}catch(e){
-		next({code:500,err:e});
+		next(null,{code:500,err:e});
+		return;
 	}
-	var token = jwt.sign({userid:user.userid,isTraveller:false},consts.jwtkey,{expiresIn:'36h'});
-	var ret = {
-		userid:user.userid,
-		user_name:user.user_name,
-		nick_name:user.nick_name,
-		head:user.head,
-		gold:user.gold
+
+	if(user === false){
+		next(null,{code:500,err:{msg:'用户名密码错误'}});
+	}else{
+		var token = jwt.sign({userid:user.userid,isTraveller:false},consts.jwtkey,{expiresIn:'36h'});
+		var ret = {
+			userid:user.userid,
+			user_name:user.user_name,
+			nick_name:user.nick_name,
+			head:user.head,
+			gold:user.gold
+		}
+		let result = await redisUtil.setUserAsync(ret);
+		ret.token = token;
+		next(null,{
+			code:200,
+			data:{user:ret}
+		});
 	}
-	let result = await redisUtil.setUserAsync(ret);
-	ret.token = token;
-	next(null,{
-		code:200,
-		data:{user:ret}
-	});
 };
 
 Handler.prototype.guestLogin = async function(msg,session,next){

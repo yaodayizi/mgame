@@ -12,9 +12,9 @@ module.exports = {
                 GAME_END:"gameEnd"           
             },
             //下注时间
-            bet_time:5,
+            bet_time:15,
             //显示结果时间
-            show_result_time:5,
+            show_result_time:20,
             roomConfig: [{
                 min_coin: 100,
                 max_coin: 0,

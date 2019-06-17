@@ -26,3 +26,14 @@ exp.enterGame = function(msg,cb){
 
 
 }
+
+exp.getRoomById = function (roomid) {
+    var roomObj = roomList[roomid];
+    return roomObj || null;
+};
+
+
+exp.kick = function(msg){
+    var room = this.getRoomById(msg.roomid);
+    room.kickPlayer(msg.uid,msg.serverid);
+}

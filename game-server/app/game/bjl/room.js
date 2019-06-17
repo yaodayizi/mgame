@@ -22,21 +22,24 @@ var Room = function(roomid, gameid) {
 
 Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
     //todo:检测player是否在某个房间
-    this.channel.add(uid, serverid);
+    if(!this.channel.getMember(uid)){
+        this.channel.add(uid, serverid);
+    }
+    
     let user = await redisUtil.getUserAsync(uid);
     user.roomid = this.roomid;
     user.serverid = serverid;
     ret = {user:user};
-    this.channel.pushMessage('playerEnter', ret);
+    
     this.playerList[uid] = user;
     cb(user);
+    this.channel.pushMessage('playerEnter', ret);
 }
 
-Room.prototype.kclick = async function (uid, serverid, cb = null1) {
+Room.prototype.kickPlayer = async function (uid, serverid, cb = null1) {
     this.channe.leave(uid, serverid);
     let ret = await redisUtil.setUserAsync({userid:uid,roomid:0,serverid:0});
     delete this.playerList[uid];
-
     this.channel.pushMessage('playerLeave', {
         uid: uid
     }, null);
