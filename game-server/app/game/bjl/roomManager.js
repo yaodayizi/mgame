@@ -37,3 +37,14 @@ exp.kick = function(msg){
     var room = this.getRoomById(msg.roomid);
     room.kickPlayer(msg.uid,msg.serverid);
 }
+
+exp.bet = function(uid,roomid,pos,coin,cb){
+    let ret =  roomList[roomid].bet(uid,pos,coin,function(err,ret){
+        if(err){
+            cb(err);
+        }else{
+            cb(null,ret);
+        }
+    })
+   
+}

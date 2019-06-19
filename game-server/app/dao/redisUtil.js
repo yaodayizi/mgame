@@ -36,7 +36,13 @@ redisUtil.create = function(config) {
 
 
 redisUtil.setUser = function(userData,cb){
-	redisUtil.client.hmset(redisUtil.userKeyPre + userData.userid,userData,cb);
+	redisUtil.client.hmset(redisUtil.userKeyPre + userData.userid,userData,function(err,res){
+		if(err){
+			cb(err);
+		}else{
+			cb(null,res);
+		}
+	});
 }
 
 
@@ -44,6 +50,9 @@ redisUtil.getUser = function(uid,cb){
 	redisUtil.client.hgetall(redisUtil.userKeyPre + uid,cb);
 }
 
+redisUtil.setUserField = function(field,data,cb){
+
+}
 
 
 

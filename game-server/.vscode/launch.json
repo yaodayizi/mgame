@@ -13,6 +13,13 @@
         {
             "type": "node",
             "request": "attach",
+            "name": "Attach test",
+            "protocol": "inspector",
+            "port": 9992
+        },
+        {
+            "type": "node",
+            "request": "attach",
             "name": "Attach bjl",
             "protocol": "inspector",
             "port": 6553

@@ -46,17 +46,32 @@ Room.prototype.kickPlayer = async function (uid, serverid, cb = null1) {
 
 }
 
-Room.prototype.bet = function (uid, pos, coin, cb = null) {
+Room.prototype.bet = function (uid, pos, coin,cb) {
     //todo:检测游戏状态是否下注时间
-    if (!betList.hasOwnProperty(uid)) {
-        betList[uid] = [];
+     //todo:检查是否限额,是否够赔钱
+    if(!Room.isCanBet()){
+        return false;
     }
-    //todo:检查是否限额,是否够赔钱
-    betList[uid].push({
+
+    if(this.playerList[uid].gold<coin){
+        return false;
+    }
+    if (!this.betList.hasOwnProperty(uid)) {
+        this.betList[uid] = [];
+    }
+    this.betList[uid].push({
         pos: pos,
         coin: coin
     });
-    return true;
+    this.playerList[uid].gold -=coin;
+    console.log('--set gold--',uid,this.playerList[uid].gold);
+     redisUtil.setUser({"userid":uid,"gold":this.playerList[uid].gold},function(err,res){
+        if(err){
+            cb(err);
+        }else{
+            cb(null,res);
+        }
+     });
 }
 
 Room.prototype.initGame = function () {
@@ -120,7 +135,7 @@ Room.prototype.initGame = function () {
     });
 
     timeFsm.on(GameState.GAME_CALC + "Enter", function () {
-        this.changeState(GameState.GAME_END, 0);
+        this.changeState(GameState.GAME_END, 2000);
     });
 
 
@@ -140,25 +155,26 @@ Room.prototype.initGame = function () {
             value: {
                 player: playerValue,
                 banker: bankerValue
-            }
+            },
+            show_result_time:consts.bjl.show_result_time
         }
-        self.channel.pushMessage(GameState.GAME_END,res, null);
+        self.channel.pushMessage(GameState.GAME_END,res, {show_result_time:consts.bjl.show_result_time});
 
 
         this.changeState(GameState.GAME_START, consts.bjl.show_result_time * 1000);
         log('\n');
-        log('next:下一局 5秒之后开始----------------------------');
+        log('next:下一局 ',consts.bjl.show_result_time,'秒之后开始----------------------------');
 
     });
 }
 
 
 Room.isCanBet = function(){
-    return simpleFsm.getState() == GameState.GAME_BET
+    return timeFsm.getState() == consts.bjl.gameState.GAME_BET;
 }
 
 Room.getGameState = function(){
-    return simpleFsm.getState();
+    return timeFsm.getState();
 }
 
 module.exports = Room;

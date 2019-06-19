@@ -28,7 +28,7 @@ SimpleFsm.prototype.changeState = function(state,time){
 }
 
 SimpleFsm.prototype.getState = function(){
-    return trhis.curState;
+    return this.curState;
 }
 
 module.exports = SimpleFsm;

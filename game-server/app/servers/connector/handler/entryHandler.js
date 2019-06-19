@@ -45,18 +45,19 @@ Handler.prototype.enterGame = function(msg,session,next){
 		session.set('uid', uid);
 		session.set('serverid', serverid);
 		
-
-		this.app.rpc.bjl.gameRemote.enterGame(session,msg,function(err,data){
+		var self = this;
+		this.app.rpc.bjl.gameRemote.enterGame(session,msg,function(err,ret){
 			if(err){
 				next(null,{code:500,err:err.msg});
 			}else{
 				
-				session.set('roomid',data.roomid);
-				session.set('gameid',data.gameid);
+				session.set('roomid',ret.data.user.roomid);
+				//session.set('gameid',data.user.gameid);
 				session.on('closed', onPlayerLeave.bind(null, self.app));
-				session.pull();
-				next(null,data);
-				console.log('join game ',data);
+				session.pushAll();
+				console.log('session',session.settings);
+				next(null,ret);
+				console.log('join game ',ret.data.user.user_name);
 			}
 		});
 
@@ -70,6 +71,8 @@ Handler.prototype.enterGame = function(msg,session,next){
 		}); */
 
 }
+
+
 
 var onPlayerLeave = function (app, session) {
 
