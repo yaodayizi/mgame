@@ -33,7 +33,7 @@
     {
         "type": "node",
         "request": "launch",
-        "name": "Launch Program1",
+        "name": "Launch appjs",
         "program": "${workspaceFolder}/app.js"
     },
         {

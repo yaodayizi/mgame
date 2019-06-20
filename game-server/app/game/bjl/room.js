@@ -9,7 +9,8 @@ var bankerLog = require('pomelo-logger').getLogger('banker', pomelo.app.serverId
 var playerLogger = require('pomelo-logger').getLogger('player', pomelo.app.serverId).info;
 
 var timeFsm = new SimpleFsm();
-var log =console.log
+let {GameState,POS,ODDS,GameRet} = consts.bjl;
+var log =console.log;
 var Room = function(roomid, gameid) {
     this.roomid = roomid;
     this.channelService = pomelo.app.get('channelService');
@@ -17,6 +18,7 @@ var Room = function(roomid, gameid) {
     this.channel = this.channelService.getChannel(channelName, true);
     this.playerList = {};
     this.betList = {};
+    this.paid = {};
     
 }
 
@@ -46,7 +48,7 @@ Room.prototype.kickPlayer = async function (uid, serverid, cb = null1) {
 
 }
 
-Room.prototype.bet = function (uid, pos, coin,cb) {
+Room.prototype.bet = async function (uid, pos, coin,chipType,num,cb) {
     //todo:检测游戏状态是否下注时间
      //todo:检查是否限额,是否够赔钱
     if(!Room.isCanBet()){
@@ -56,28 +58,37 @@ Room.prototype.bet = function (uid, pos, coin,cb) {
     if(this.playerList[uid].gold<coin){
         return false;
     }
-    if (!this.betList.hasOwnProperty(uid)) {
-        this.betList[uid] = [];
+    if (!this.betList.hasOwnProperty(pos)) {
+        this.betList[pos] = {};
     }
-    this.betList[uid].push({
+    if (!this.betList[pos].hasOwnProperty(uid)) {
+        this.betList[pos][uid] = 0;
+    }
+
+    this.betList[pos][uid] +=coin;
+
+    let userBet = {
+        uid:uid,
         pos: pos,
-        coin: coin
-    });
+        coin: coin,
+        chipType:chipType,
+        num:num
+    }
+
+    this.betList[pos][uid] += coin;
     this.playerList[uid].gold -=coin;
     console.log('--set gold--',uid,this.playerList[uid].gold);
-     redisUtil.setUser({"userid":uid,"gold":this.playerList[uid].gold},function(err,res){
-        if(err){
-            cb(err);
-        }else{
-            cb(null,res);
-        }
-     });
+
+    let ret = await redisUtil.setUserAsync({"userid":uid,"gold":this.playerList[uid].gold});
+    this.channel.pushMessage(GameState.GAME_BET,userBet,null);
+
+    cb(ret);
 }
 
 Room.prototype.initGame = function () {
     
     var baijiale = new Baijiale();
-    var GameState = consts.bjl.gameState;
+    
 
     var playerCards = baijiale.playerCards;
     var bankerCards = baijiale.bankerCards;
@@ -86,6 +97,10 @@ Room.prototype.initGame = function () {
     timeFsm.on(GameState.GAME_START + "Enter", function () {
         //log('gameStart',this.curState);
         log('游戏开始');
+
+        this.betList = {};
+        this.paid = {};
+
         self.channel.pushMessage(GameState.GAME_START, {gameState:GameState.GAME_START}, null);
         if (baijiale.cardPool.length <= 7) {
             baijiale.cardPool = baijiale.getCardPool();
@@ -129,7 +144,7 @@ Room.prototype.initGame = function () {
         if (isBankerDrawCard) {
             bankerCards.push(baijiale.getCard());
             cardsToString(bankerCards);
-        }
+        }       
         this.changeState(GameState.GAME_CALC, 0);
 
     });
@@ -146,8 +161,49 @@ Room.prototype.initGame = function () {
         log(`plalyer:${playerValue}  banker:${bankerValue}`);
         let ret = baijiale.calculateAll(playerCards, bankerCards);
         log(ret);
+
+        //计算赔付
+        let pos =0;
+        let odds=0;
+
+        switch(ret.win){
+            case GameRet.TIE:
+                pos = POS.TIE;
+                break;
+            case GameRet.PLAYER:
+                pos = POS.PLAYER;
+                break;
+            case GameRet.BANKER:
+                pos = POS.BANKER;
+        }
+
+        odds = ODDS[pos];
+        self.computerPaid(pos,odds);
+
+        if(ret.pair == GameRet.BOTH){
+            odds = ODDS[POS.PLAYER];
+            pos = POS.PLAYER;
+            self.computerPaid(pos,odds);
+            pos = POS.BANKER;
+            odds = ODDS[POS.PLAYER];
+            self.computerPaid(pos,odds);
+        }else if(ret.pair == GameRet.PLAYER){
+            odds = ODDS[POS.PLAYER];
+            pos = POS.PLAYER;
+            self.computerPaid(pos,odds);
+
+        }else if(ret.pair == GameRet.BANKER){
+            odds = ODDS[POS.BANKER];
+            pos = POS.BANKER;
+            self.computerPaid(pos,odds);
+        }
+
+       
+        
+
         let res = {
             result: ret,
+            paid:self.paid,
             cards: {
                 player: playerCards,
                 banker: bankerCards
@@ -156,9 +212,14 @@ Room.prototype.initGame = function () {
                 player: playerValue,
                 banker: bankerValue
             },
+            gold:self.playerList[uid].gold,
             show_result_time:consts.bjl.show_result_time
         }
-        self.channel.pushMessage(GameState.GAME_END,res, {show_result_time:consts.bjl.show_result_time});
+
+        
+
+
+        self.channel.pushMessage(GameState.GAME_END,res, null);
 
 
         this.changeState(GameState.GAME_START, consts.bjl.show_result_time * 1000);
@@ -168,9 +229,26 @@ Room.prototype.initGame = function () {
     });
 }
 
+/**
+ * 赔付
+ * @param  {位置} pos
+ * @param  {赔率} odds
+ */
+Room.prototype.computerPaid =async function(pos,odds){
+    if(!this.betList[pos]) return;
+
+    _.forEach(this.betList[pos],function(val,key){
+        let coin = val+val*odds;
+        this.playerList[key].gold += coin;
+        this.paid[pos] = {};
+        this.paid[pos][key] = {val:val,coin:coin,gold:this.playerList[key].gold};
+        redisUtil.setUserAsync({userid:key,gold: this.playerList[key].gold});
+
+    }.bind(this));
+};
 
 Room.isCanBet = function(){
-    return timeFsm.getState() == consts.bjl.gameState.GAME_BET;
+    return timeFsm.getState() == GameState.GAME_BET;
 }
 
 Room.getGameState = function(){

@@ -1,4 +1,4 @@
-const redisUtils = require("../app/dao/redisUtil");
+const redisUtils = require("../app/dao/redisUtil.js");
 var chai = require("chai"),
     expect = chai.expect,
     should = chai.should;
@@ -10,18 +10,20 @@ describe('test of redisUtils', function(){
         it('return is user ', function(){
             //var ret = await userDao.login('aaa','bbb');
             //expect(ret).to.be.false;
-            redisUtils.setUserData({
+            /*redisUtils.setUser({
                 userid:'user_11111',
                 user_name:'aaa',
                 nick_name:'哦哦哦',
                 phone:'12312344321',
                 gold:3000
-            },function(err,res){
+            },redisUtils.redis.print*//* function(err,res){
                 console.log(res);
                 expect(res).equals('OK');
                 
-            });
+            } */
+            var o ={'mm':2,'kk':'aa'};
+            redisUtils.client.hmset('test',o);
+        });
         });
         
     });
-});

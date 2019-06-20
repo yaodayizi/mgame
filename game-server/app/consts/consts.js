@@ -4,7 +4,7 @@ module.exports = {
             1000:"bjl"
         },
         bjl: {
-            gameState:{
+            GameState:{
                 GAME_START:"gameStart",
                 GAME_BET:"gameBet",
                 GAME_CHECK:"gameCheck",
@@ -31,7 +31,14 @@ module.exports = {
                 min_bet: 1000,
                 max_bet: 8000
             }],
-            pos:{
+            GameRet:{
+               TIE:"tie",
+               BANKER:"banker",
+               PLAYER:"player",
+               BOTH:"both",
+               NO:"none"
+            },
+            POS:{
                 BANKER:0,
                 PLAYER:1,
                 TIE:2,
@@ -40,6 +47,15 @@ module.exports = {
                 BOTH_PAIR:5,
                 BIG:6,
                 SMALL:7}
+            ,
+            ODDS:{
+                0:0.95,
+                1:1,
+                2:8,
+                3:11,
+                4:11,
+                5:11
+            }
             
             
         }

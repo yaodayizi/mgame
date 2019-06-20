@@ -38,13 +38,9 @@ exp.kick = function(msg){
     room.kickPlayer(msg.uid,msg.serverid);
 }
 
-exp.bet = function(uid,roomid,pos,coin,cb){
-    let ret =  roomList[roomid].bet(uid,pos,coin,function(err,ret){
-        if(err){
-            cb(err);
-        }else{
-            cb(null,ret);
-        }
+exp.bet = function(uid,roomid,pos,coin,chipType,num,cb){
+     roomList[roomid].bet(uid,pos,coin,chipType,num,function(ret){
+        cb(ret);
     })
    
 }
