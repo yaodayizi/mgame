@@ -39,8 +39,6 @@ exp.kick = function(msg){
 }
 
 exp.bet = function(uid,roomid,pos,coin,chipType,num,cb){
-     roomList[roomid].bet(uid,pos,coin,chipType,num,function(ret){
-        cb(ret);
-    })
+    return  roomList[roomid].bet(uid,pos,coin,chipType,num);
    
 }

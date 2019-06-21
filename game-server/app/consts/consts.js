@@ -16,20 +16,22 @@ module.exports = {
             //显示结果时间
             show_result_time:20,
             roomConfig: [{
-                min_coin: 100,
+                //最少携带金币
+                min_coin: 1000,
                 max_coin: 0,
-                min_bet: 10,
-                max_bet: 80
+                //最少下注
+                min_bet: 100,
+                max_bet: 800
             }, {
                 min_coin: 1000,
                 max_coin: 0,
                 min_bet: 100,
-                max_bet: 800
+                max_bet: 2000
             }, {
                 min_coin: 10000,
                 max_coin: 0,
-                min_bet: 1000,
-                max_bet: 8000
+                min_bet: 500,
+                max_bet: 5000
             }],
             GameRet:{
                TIE:"tie",
@@ -38,6 +40,7 @@ module.exports = {
                BOTH:"both",
                NO:"none"
             },
+            //位置
             POS:{
                 BANKER:0,
                 PLAYER:1,
@@ -48,6 +51,7 @@ module.exports = {
                 BIG:6,
                 SMALL:7}
             ,
+            //赔率
             ODDS:{
                 0:0.95,
                 1:1,

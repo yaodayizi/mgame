@@ -13,7 +13,10 @@ var handler = Handler.prototype;
 handler.bet = function(msg,session,next){
     let uid = session.get('uid');
     let roomid = session.get('roomid');
-    let ret = roomManager.bet(uid,roomid,msg.pos,msg.coin,msg.chipType,msg.num,function(ret){
+    roomManager.bet(uid,roomid,msg.pos,msg.coin,msg.chipType,msg.num).then(function(ret){
         next(null,ret);
-    });
+    }).catch(function(e){
+        next(null,e);
+    })
+    
 }
