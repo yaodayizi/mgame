@@ -6,7 +6,7 @@ let room;
 let roomid = 0;
 let exp = module.exports;
 
-exp.enterGame = function(msg,cb){
+exp.enterGame = function(msg){
     if(roomidArr.length==0){
         roomid++;
         room = new Room(roomid,msg.gameid);
@@ -16,11 +16,8 @@ exp.enterGame = function(msg,cb){
     }else{
         
     }
-    room.addPlayer(msg.uid,msg.serverid,function(ret){
-        
-        cb(null,{code:200,data:{user:ret}});
-    
-    });
+    return room.addPlayer(msg.uid,msg.serverid);
+
 
     //需要返回路书数据
 

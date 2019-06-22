@@ -127,7 +127,7 @@ Baijiale.prototype.calculateNatural = function(outcome, playerCards = [], banker
 /**
  * 计算庄闲对子
  */
-Baijiale.prototype.calculatePairs = function({playerCards = {}, bankerCards = {}}) {
+Baijiale.prototype.calculatePairs = function(playerCards,bankerCards) {
     const isPlayerPair = this.calculatePair(playerCards);
     const isBankerPair = this.calculatePair(bankerCards);
 
@@ -145,12 +145,13 @@ Baijiale.prototype.calculatePairs = function({playerCards = {}, bankerCards = {}
  * 计算对子
  */
 Baijiale.prototype.calculatePair = function(cards = []) {
-    if (cards.length !== 2)
-        return false;
-
-    let [firstCard, secondCard] = cards;
-
-    return firstCard.value === secondCard.value;
+    if (cards.length == 2){
+        let [firstCard, secondCard] = cards;
+        return firstCard.value === secondCard.value;
+    }else{
+        let [firstCard,secondCard,threeCard] = cards;
+        return firstCard.value === secondCard.value || firstCard.value == threeCard.value || secondCard.value == threeCard.value;
+    }
 }
 
 /**
@@ -164,7 +165,7 @@ Baijiale.prototype.calculateHandValue = function(cards = []) {
     return cardsValue % 10;
 }
 
-Baijiale.prototype.calculateAll = function(playerCards = {}, bankerCards = {}){
+Baijiale.prototype.calculateAll = function(playerCards, bankerCards){
     let ret = {
     }
     ret.pair = this.calculatePairs(playerCards,bankerCards);
@@ -193,7 +194,7 @@ Baijiale.prototype.valueForCard = function ({suit, value = 0}) {
     }
 }
 
-Baijiale.prototype.isPlayerDrawCard = function(playerCards = {}){
+Baijiale.prototype.isPlayerDrawCard = function(playerCards){
     let playerValue = this.calculateHandValue(playerCards);
     if(playerCards.length==2){
 
@@ -210,7 +211,7 @@ Baijiale.prototype.isPlayerDrawCard = function(playerCards = {}){
     return false;
 }
 
-Baijiale.prototype.isBankerDrawCard = function(playerCards = {},bankerCards = {}){
+Baijiale.prototype.isBankerDrawCard = function(playerCards,bankerCards){
     let playerValue = this.calculateHandValue(playerCards);
     let bankerValue  = this.calculateHandValue(bankerCards);
     //天生天王 都停牌 不补牌

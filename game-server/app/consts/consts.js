@@ -14,7 +14,7 @@ module.exports = {
             //下注时间
             bet_time:15,
             //显示结果时间
-            show_result_time:20,
+            show_result_time:15,
             roomConfig: [{
                 //最少携带金币
                 min_coin: 1000,

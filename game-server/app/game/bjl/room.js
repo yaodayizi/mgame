@@ -17,10 +17,26 @@ var Room = function(roomid, gameid) {
     this.channelService = pomelo.app.get('channelService');
     let channelName = 'room_' + gameid + '_' + roomid;
     this.channel = this.channelService.getChannel(channelName, true);
+    this.roundID = 0;
+    //用户列表
     this.playerList = {};
+    //下注列表
     this.betList = {};
+    //赔付
     this.paid = {};
+    //用户下注总额
     this.userBets = {};
+    this.history = {
+        //0庄赢 1闲赢 2和
+        //0没有对子 1庄对 2闲对 3都是对子
+        gameRet:[],
+        //多少局
+        count:{
+            num:0,
+            bankerPair:0,
+            playerPair:0
+        }
+    }
     
 }
 
@@ -36,11 +52,12 @@ Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
     ret = {user:user};
     
     this.playerList[uid] = user;
-    cb(user);
+    
     this.channel.pushMessage('playerEnter', ret);
+    return {roomConfig:this.roomConfig,user:user}
 }
 
-Room.prototype.kickPlayer = async function (uid, serverid, cb = null1) {
+Room.prototype.kickPlayer = async function (uid, serverid, cb = null) {
     this.channe.leave(uid, serverid);
     let ret = await redisUtil.setUserAsync({userid:uid,roomid:0,serverid:0});
     delete this.playerList[uid];
@@ -53,7 +70,7 @@ Room.prototype.kickPlayer = async function (uid, serverid, cb = null1) {
 Room.prototype.bet = async function (uid, pos, coin,chipType,num,cb) {
     //todo:检测游戏状态是否下注时间
      //todo:检查是否限额,是否够赔钱
-    if(!Room.isCanBet()){
+    if(!this.isCanBet()){
         return '下注时间已过';
     }
 
@@ -111,10 +128,10 @@ Room.prototype.initGame = function () {
     timeFsm.on(GameState.GAME_START + "Enter", function () {
         //log('gameStart',this.curState);
         log('游戏开始');
-
+        this.roundID = Date.now();
         self.betList = {};
         self.paid = {};
-
+        self.userBets ={};
         self.channel.pushMessage(GameState.GAME_START, {gameState:GameState.GAME_START}, null);
         if (baijiale.cardPool.length <= 7) {
             baijiale.cardPool = baijiale.getCardPool();
@@ -179,20 +196,31 @@ Room.prototype.initGame = function () {
         //计算赔付
         let pos =0;
         let odds=0;
-
+        let historyWin=0;
+        let historyPair=0;
         switch(ret.win){
             case GameRet.TIE:
                 pos = POS.TIE;
+                historyWin = 2;
                 break;
             case GameRet.PLAYER:
                 pos = POS.PLAYER;
+                historyWin = 1;
                 break;
             case GameRet.BANKER:
                 pos = POS.BANKER;
+                historyWin = 0;
         }
 
         odds = ODDS[pos];
         self.computerPaid(pos,odds);
+
+        if(ret.win ==GameRet.TIE){
+                //和局 押庄闲的退筹码
+            self.computerPaid(1,0);
+            self.computerPaid(0,0);
+
+        }
 
         if(ret.pair == GameRet.BOTH){
             odds = ODDS[POS.PLAYER];
@@ -201,27 +229,49 @@ Room.prototype.initGame = function () {
             pos = POS.BANKER;
             odds = ODDS[POS.PLAYER];
             self.computerPaid(pos,odds);
+            historyPair = 3;
+            self.history.count.bankerPair++;
+            self.history.count.playerPair++;
         }else if(ret.pair == GameRet.PLAYER){
             odds = ODDS[POS.PLAYER];
             pos = POS.PLAYER;
             self.computerPaid(pos,odds);
-
+            historyPair = 2;
+            self.history.count.bankerPair++;
         }else if(ret.pair == GameRet.BANKER){
             odds = ODDS[POS.BANKER];
             pos = POS.BANKER;
             self.computerPaid(pos,odds);
+            historyPair = 1;
+            self.history.count.bankerPair++;
         }
 
-        let userGold = {};
-       _.forEach(self.userBets,function(val,key){
-           userGold[key] = this.playerList[key].gold;
-       }.bind(self))
+
+        let betPaid = {};
+        let sqls = [];
+       _.forEach(self.userBets,function(val,uid){
+           betPaid[uid] = {bet:0,paid:0,gold:self.playerList[uid].gold};
+           betPaid[uid].bet = self.userBets[uid];
+           let sql = "";
+       }.bind(self));
+
+       _.foreach(self.paid,function(val,pos){
+           let paidPos = self.paid[pos]; 
+           _.forEach(paidPos,function(val,uid){
+               if(betPaid[uid]){
+                   betPaid[uid].paid += val.coin;
+               }
+           })
+       });
         
+       self.history.gameRet.push({id:self.roundID,win:historyWin,pair:historyPair});
+       self.count.num++;
+
 
         let res = {
             result: ret,
             paid:self.paid,
-            userGold:userGold,
+            betPaid:betPaid,
             cards: {
                 player: playerCards,
                 banker: bankerCards
@@ -254,7 +304,6 @@ Room.prototype.initGame = function () {
  */
 Room.prototype.computerPaid =async function(pos,odds){
     if(!this.betList[pos]) return;
-
     _.forEach(this.betList[pos],function(val,key){
         let coin = val+val*odds;
         this.playerList[key].gold += coin;
@@ -265,11 +314,11 @@ Room.prototype.computerPaid =async function(pos,odds){
     }.bind(this));
 };
 
-Room.isCanBet = function(){
+Room.prototype.isCanBet = function(){
     return timeFsm.getState() == GameState.GAME_BET;
 }
 
-Room.getGameState = function(){
+Room.prototype.getGameState = function(){
     return timeFsm.getState();
 }
 

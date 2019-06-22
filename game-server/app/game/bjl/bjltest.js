@@ -85,8 +85,8 @@ timeFsm.on(GameState.GAME_CALC+"Enter",function(){
     log(`plalyer:${playerValue}  banker:${bankerValue}`);
     let ret = baijiale.calculateAll(playerCards,bankerCards);
     log(ret);
-    this.changeState(GameState.GAME_END,0);
-});
+    timeFsm.changeState(GameState.GAME_END,0);
+}.bind(this));
 
 
 timeFsm.on(GameState.GAME_END+"Enter",function(){

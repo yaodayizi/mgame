@@ -48,7 +48,7 @@ Handler.prototype.enterGame = function(msg,session,next){
 		var self = this;
 		this.app.rpc.bjl.gameRemote.enterGame(session,msg,function(err,ret){
 			if(err){
-				next(null,{code:500,err:err.msg});
+				next(null,{err:err.msg});
 			}else{
 				
 				session.set('roomid',ret.data.user.roomid);
@@ -56,8 +56,9 @@ Handler.prototype.enterGame = function(msg,session,next){
 				session.on('closed', onPlayerLeave.bind(null, self.app));
 				session.pushAll();
 				console.log('session',session.settings);
-				next(null,ret);
+				
 				console.log('join game ',ret.data.user.user_name);
+				next(null,ret);
 			}
 		});
 
