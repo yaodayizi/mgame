@@ -249,10 +249,13 @@ Room.prototype.initGame = function () {
 
         let betPaid = {};
         let sqls = [];
+        //insert into t_user (userid,gold) values (1,10000),(4,9998)  on duplicate key update gold = VALUES(gold);
+on duplicate key update gold = VALUES(gold)
        _.forEach(self.userBets,function(val,uid){
            betPaid[uid] = {bet:0,paid:0,gold:self.playerList[uid].gold};
            betPaid[uid].bet = self.userBets[uid];
-           let sql = "";
+           let sql = "("+uid+","+gold+")";
+           sqls.push(sql);
        }.bind(self));
 
        _.foreach(self.paid,function(val,pos){
