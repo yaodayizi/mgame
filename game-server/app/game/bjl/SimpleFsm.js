@@ -3,7 +3,7 @@ const uitl = require("util");
 
 
 function SimpleFsm(){
-    this.curState = "";  
+    this.curState = "gameStop";  
     this.timeoutID = 0;  
     EventEmiter.call(this);
 

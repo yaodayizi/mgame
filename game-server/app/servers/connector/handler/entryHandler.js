@@ -62,15 +62,6 @@ Handler.prototype.enterGame = function(msg,session,next){
 			}
 		});
 
-/* 		next(null,{
-			code:200,
-			userid:user.userid,
-			user_name:user.user_name,
-			nick_name:nick_name,
-			head:user.head,
-			gold:user.gold,
-		}); */
-
 }
 
 

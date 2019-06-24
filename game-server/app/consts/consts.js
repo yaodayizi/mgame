@@ -9,7 +9,8 @@ module.exports = {
                 GAME_BET:"gameBet",
                 GAME_CHECK:"gameCheck",
                 GAME_CALC:"gameCalc",
-                GAME_END:"gameEnd"           
+                GAME_END:"gameEnd",
+                GAME_STOP:"gameStop"           
             },
             //下注时间
             bet_time:15,
@@ -59,6 +60,10 @@ module.exports = {
                 3:11,
                 4:11,
                 5:11
+            },
+            roomList:{
+                0:{"name":"百家乐A",start:2,end:5},
+                1:{"name":"百家乐B",start:1,end:5}
             }
             
             

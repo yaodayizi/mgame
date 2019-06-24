@@ -3,6 +3,7 @@ const _ = require("lodash");
 const SimpleFsm = require("./SimpleFsm.js");
 var consts = require("../../consts/consts.js");
 const Baijiale = require("./bjl.js");
+const sqlDao = require("../../dao/mysql/userDao");
 const redisUtil = require("../../dao/redisUtil.js");
 var logger = require('pomelo-logger').getLogger('room', pomelo.app.serverId).info;
 var bankerLog = require('pomelo-logger').getLogger('banker', pomelo.app.serverId).info;
@@ -11,9 +12,11 @@ var playerLogger = require('pomelo-logger').getLogger('player', pomelo.app.serve
 var timeFsm = new SimpleFsm();
 let {GameState,POS,ODDS,GameRet,roomConfig} = consts.bjl;
 var log =console.log;
-var Room = function(roomid, gameid) {
-    this.roomConfig = roomConfig[0];
+var Room = function(roomid,roomName,roomConfig,gameid=1000) {
+    this.roomConfig = roomConfig;
     this.roomid = roomid;
+    this.roomName = roomName;
+    this.gameid = gameid;
     this.channelService = pomelo.app.get('channelService');
     let channelName = 'room_' + gameid + '_' + roomid;
     this.channel = this.channelService.getChannel(channelName, true);
@@ -29,15 +32,18 @@ var Room = function(roomid, gameid) {
     this.history = {
         //0庄赢 1闲赢 2和
         //0没有对子 1庄对 2闲对 3都是对子
-        gameRet:[],
+        roadData:[],
         //多少局
         count:{
             num:0,
+            tie:0,
+            banker:0,
+            player:0,
             bankerPair:0,
             playerPair:0
         }
     }
-    
+    console.log(this.roomid,this.roomName,this.roomConfig,'room create');  
 }
 
 Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
@@ -49,16 +55,17 @@ Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
     let user = await redisUtil.getUserAsync(uid);
     user.roomid = this.roomid;
     user.serverid = serverid;
+    user.gameid = this.gameid;
     ret = {user:user};
     
     this.playerList[uid] = user;
     
     this.channel.pushMessage('playerEnter', ret);
-    return {roomConfig:this.roomConfig,user:user}
+    return {roomid:this.roomid,roomName:this.roomName,roomConfig:this.roomConfig,user:user,roadData:this.getRoadData()};
 }
 
 Room.prototype.kickPlayer = async function (uid, serverid, cb = null) {
-    this.channe.leave(uid, serverid);
+    this.channel.leave(uid, serverid);
     let ret = await redisUtil.setUserAsync({userid:uid,roomid:0,serverid:0});
     delete this.playerList[uid];
     this.channel.pushMessage('playerLeave', {
@@ -202,14 +209,17 @@ Room.prototype.initGame = function () {
             case GameRet.TIE:
                 pos = POS.TIE;
                 historyWin = 2;
+                self.history.count.tie ++;
                 break;
             case GameRet.PLAYER:
                 pos = POS.PLAYER;
                 historyWin = 1;
+                self.history.count.player++;
                 break;
             case GameRet.BANKER:
                 pos = POS.BANKER;
                 historyWin = 0;
+                self.history.count.banker++;
         }
 
         odds = ODDS[pos];
@@ -250,28 +260,26 @@ Room.prototype.initGame = function () {
         let betPaid = {};
         let sqls = [];
         //insert into t_user (userid,gold) values (1,10000),(4,9998)  on duplicate key update gold = VALUES(gold);
-on duplicate key update gold = VALUES(gold)
        _.forEach(self.userBets,function(val,uid){
            betPaid[uid] = {bet:0,paid:0,gold:self.playerList[uid].gold};
            betPaid[uid].bet = self.userBets[uid];
-           let sql = "("+uid+","+gold+")";
+           let sql = "("+uid+","+self.playerList[uid].gold+")";
            sqls.push(sql);
        }.bind(self));
 
-       _.foreach(self.paid,function(val,pos){
+       _.forEach(self.paid,function(val,pos){
            let paidPos = self.paid[pos]; 
            _.forEach(paidPos,function(val,uid){
                if(betPaid[uid]){
                    betPaid[uid].paid += val.coin;
                }
-           })
+           });
        });
-        
-       self.history.gameRet.push({id:self.roundID,win:historyWin,pair:historyPair});
-       self.count.num++;
 
-
-        let res = {
+       //路书数据
+       self.history.roadData.push(historyWin+'|'+historyPair+'|'+bankerValue+'|'+playerValue);
+       self.history.count.num++;
+       let res = {
             result: ret,
             paid:self.paid,
             betPaid:betPaid,
@@ -291,8 +299,12 @@ on duplicate key update gold = VALUES(gold)
 
 
         self.channel.pushMessage(GameState.GAME_END,res, null);
+        if(sqls.length){
+            let goldSql = "insert into t_user (userid,gold) values "+ sqls.join(',')+" on duplicate key update gold = VALUES(gold)";
 
-
+            console.log('*****',goldSql);
+            sqlDao.exec(goldSql);
+        }
         this.changeState(GameState.GAME_START, consts.bjl.show_result_time * 1000);
         log('\n');
         log('next:下一局 ',consts.bjl.show_result_time,'秒之后开始----------------------------');
@@ -322,8 +334,13 @@ Room.prototype.isCanBet = function(){
 }
 
 Room.prototype.getGameState = function(){
-    return timeFsm.getState();
+        return timeFsm.getState();
 }
+
+Room.prototype.getRoadData = function(count=50){
+    return this.history.roadData.slice(-count);
+}
+
 
 module.exports = Room;
 

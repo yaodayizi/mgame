@@ -21,7 +21,7 @@ userDao.getDb = function(){
 }
 
 
-console.log(process.env.NODE_ENV,'00000------',userDao.db);
+//console.log(process.env.NODE_ENV,'00000------',userDao.db);
 
 userDao.login = async function(username,password){
     var sql = "select * from t_user where user_name = ?  limit 0,1";
@@ -56,6 +56,16 @@ userDao.createUser = async function(user){
     try{
         var ret =  await this.getDb().asyncQuery(sql,args);
         return ret.insertId;
+    }catch(e){
+        log.error(e);
+        throw e;
+    }
+}
+
+userDao.exec = async function(sql,args){
+    try{
+        return await this.getDb().asyncQuery(sql,args);
+
     }catch(e){
         log.error(e);
         throw e;

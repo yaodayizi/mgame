@@ -27,3 +27,5 @@ GameRemote.prototype.kick = function (data, cb) {
     roomManager.kick(data);
     cb();
 };
+
+
