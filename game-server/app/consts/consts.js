@@ -62,8 +62,8 @@ module.exports = {
                 5:11
             },
             roomList:{
-                0:{"name":"百家乐A",start:2,end:5},
-                1:{"name":"百家乐B",start:1,end:5}
+                0:{"name":"百家乐A",start:2,end:3},
+                1:{"name":"百家乐B",start:1,end:2}
             }
             
             

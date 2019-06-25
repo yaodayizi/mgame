@@ -15,12 +15,11 @@ var GameRemote = function (app) {
 GameRemote.prototype.enterGame = function (msg, cb) {
     console.log('gameRemote.enterGame caught ------------------');
 
-    roomManager.enterGame(msg).then(function(ret){
-        cb(null,{code:200,data:ret});
-    }).catch(function(e){
-        cb(e);
-    });
+    let ret =  roomManager.enterGame(msg);
+    cb(null,{code:200,data:ret});
 };
+
+
 
 GameRemote.prototype.kick = function (data, cb) {
     console.log('GameRemote.kick caught >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');

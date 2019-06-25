@@ -51,13 +51,13 @@ Handler.prototype.enterGame = function(msg,session,next){
 				next(null,{err:err.msg});
 			}else{
 				
-				session.set('roomid',ret.data.user.roomid);
+				//session.set('roomid',ret.data.user.roomid);
 				//session.set('gameid',data.user.gameid);
 				session.on('closed', onPlayerLeave.bind(null, self.app));
 				session.pushAll();
 				console.log('session',session.settings);
 				
-				console.log('join game ',ret.data.user.user_name);
+				//console.log('join game ',ret.data.user.user_name);
 				next(null,ret);
 			}
 		});

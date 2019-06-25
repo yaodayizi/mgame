@@ -1,8 +1,8 @@
 const Room = require("./Room.js");
 const bjlConfig = require("../../consts/consts.js").bjl;
 const _ = require("lodash");
-const roomList = {};
-const roomidArr = [];
+var roomList = {};
+var roomidArr = [];
 let roomid = 0;
 let exp = module.exports;
 
@@ -28,29 +28,31 @@ var createRoomList = function(){
 }
 
 exp.enterGame = function(msg){
-    let room;
+    
     if(roomidArr.length==0){
         roomid++;
-        room =  createRoom(roomid,bjlConfig.roomList[0].name+roomid,bjlConfig.roomConfig[0]);
-        room.initGame();
-        process.nextTick(createRoomList);
-
-    }else{
-        if(msg.roomid){
-            room = this.getRoomById(msg.roomid);
-            if(!room){
-                room = this.getRoomById(1);
-            }
-        }else{
-            room = this.getRoomById(1);
-        }
+        //let room =  createRoom(roomid,bjlConfig.roomList[0].name+roomid,bjlConfig.roomConfig[0]);
+        //room.initGame();
+        //process.nextTick(createRoomList);
+        createRoomList();
     }
     
-    return room.addPlayer(msg.uid,msg.serverid);
+    return this.getAllRoomData();
 }
 
-exp.joinGame = function(msg){
-    
+
+
+exp.joinRoom = function(uid,serverid,roomid){
+    let room;
+    if(roomid){
+        room = this.getRoomById(roomid);
+        if(!room){
+            room = this.getRoomById(1);
+        }
+    }else{
+        room = this.getRoomById(1);
+    }
+    return room.addPlayer(uid,serverid);
 }
 
 
@@ -74,18 +76,20 @@ exp.bet = function(uid,roomid,pos,coin,chipType,num){
  * 得到ROOM数据
  */
 exp.getRoomData = function(roomid,num){
+    let room = this.getRoomById(roomid);
     let ret = {
         roomid:roomid,
-        roomName:roomList[roomid].roomName,
-        roadData:roomList[roomid].getRoadData(num)
+        roomName:room.roomName,
+        roomConfig:room.roomConfig,
+        roadData:room.getRoadData(num)
     }
     return ret;
 }
 
-exp.getAllRoomData = function(num){
+exp.getAllRoomData = function(num=null){
     let retArr = [];
     _.forEach(roomidArr,function(roomid){
-        retArr.push(getRoomData(roomid,num));
-    });
+        retArr.push(this.getRoomData(roomid,num));
+    }.bind(this));
     return retArr;
 }
