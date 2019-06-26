@@ -56,7 +56,7 @@ timeFsm.on(GameState.GAME_BET+"Enter",function(){
     this.changeState(GameState.GAME_CHECK,5*1000);
 });
 
-timeFsm.on(GameState.GAME_BET+"Leava",function(){
+timeFsm.on(GameState.GAME_BET+"leave",function(){
     log("下注结束");
 });
 

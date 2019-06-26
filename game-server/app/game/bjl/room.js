@@ -1,17 +1,19 @@
 const pomelo = require("pomelo");
 const _ = require("lodash");
 const SimpleFsm = require("./SimpleFsm.js");
-var consts = require("../../consts/consts.js");
+const consts = require("../../consts/consts.js");
 const Baijiale = require("./bjl.js");
 const sqlDao = require("../../dao/mysql/userDao");
 const redisUtil = require("../../dao/redisUtil.js");
-var logger = require('pomelo-logger').getLogger('room', pomelo.app.serverId).info;
-var bankerLog = require('pomelo-logger').getLogger('banker', pomelo.app.serverId).info;
-var playerLogger = require('pomelo-logger').getLogger('player', pomelo.app.serverId).info;
+const logger = require('pomelo-logger').getLogger('room', pomelo.app.serverId).info;
+const bankerLog = require('pomelo-logger').getLogger('banker', pomelo.app.serverId).info;
+const playerLogger = require('pomelo-logger').getLogger('player', pomelo.app.serverId).info;
 
-var timeFsm = new SimpleFsm();
+let timeFsm = new SimpleFsm();
 let {GameState,POS,ODDS,GameRet,roomConfig} = consts.bjl;
-var log =console.log;
+let log =console.log;
+
+
 var Room = function(roomid,roomName,roomConfig,gameid=1000) {
     this.roomConfig = roomConfig;
     this.roomid = roomid;
@@ -22,6 +24,8 @@ var Room = function(roomid,roomName,roomConfig,gameid=1000) {
     this.channel = this.channelService.getChannel(channelName, true);
     this.roundID = 0;
     //用户列表
+    this.playerList = {};
+    //已下注 游戏未结束 已离开或已掉线用户
     this.playerList = {};
     //下注列表
     this.betList = {};
@@ -52,6 +56,11 @@ Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
         this.channel.add(uid, serverid);
     }
     
+    //如果在已离线列表 移除
+    if(this.playerList[uid]){
+        delete this.playerList[uid];
+    }
+
     let user = await redisUtil.getUserAsync(uid);
     user.roomid = this.roomid;
     user.serverid = serverid;
@@ -66,21 +75,31 @@ Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
 
 Room.prototype.kickPlayer = async function (uid, serverid, cb = null) {
     this.channel.leave(uid, serverid);
-    let ret = await redisUtil.setUserAsync({userid:uid,roomid:0,serverid:0});
-    delete this.playerList[uid];
-    this.channel.pushMessage('playerLeave', {
+    //已下注 游戏未结束 暂时不从此房间删除用户 结算完毕再删除用户
+    if(!this.userBets[uid] || this.getGameState == GameState.GAME_END){
+        delete this.playerList[uid];
+    }else{
+        this.playerList[uid] = uid;
+    }
+
+
+    //let ret = await redisUtil.setUserAsync({userid:uid,roomid:0,serverid:0});
+    this.channel.pushMessage('playerleave', {
         uid: uid
     }, null);
 
+    return uid;
 }
 
 Room.prototype.bet = async function (uid, pos, coin,chipType,num,cb) {
-    //todo:检测游戏状态是否下注时间
-     //todo:检查是否限额,是否够赔钱
+    
     if(!this.isCanBet()){
         return '下注时间已过';
     }
 
+    if(!this.playerList[uid]){
+        return '用户不在此房间';
+    }
 
     if(this.playerList[uid].gold<coin){
         return '用户金钱不够';
@@ -163,9 +182,9 @@ Room.prototype.initGame = function () {
         this.changeState(GameState.GAME_CHECK, consts.bjl.bet_time * 1000);
     });
 
-    timeFsm.on(GameState.GAME_BET + "Leava", function () {
+    timeFsm.on(GameState.GAME_BET + "leave", function () {
         log("下注结束");
-        self.channel.pushMessage(GameState.GAME_BET + "Leava", {msg:'bet_end'}, null);
+        self.channel.pushMessage(GameState.GAME_BET + "leave", {msg:'bet_end'}, null);
     });
 
     timeFsm.on(GameState.GAME_CHECK + "Enter", function () {
@@ -276,6 +295,8 @@ Room.prototype.initGame = function () {
            });
        });
 
+
+
        //路书数据
        self.history.roadData.push(historyWin+'|'+historyPair+'|'+bankerValue+'|'+playerValue);
        self.history.count.num++;
@@ -295,16 +316,22 @@ Room.prototype.initGame = function () {
             show_result_time:consts.bjl.show_result_time
         }
 
-        
-
+        //删除已离开用户
+        _.forEach(this.playerList,function(uid,key){
+            delete this.plyaerList[uid];
+        }.bind(this));
 
         self.channel.pushMessage(GameState.GAME_END,res, null);
         if(sqls.length){
-            let goldSql = "insert into t_user (userid,gold) values "+ sqls.join(',')+" on duplicate key update gold = VALUES(gold)";
+            let goldSql = "insert into t_user (userid,gold) values "+ sqls.join(',')+" on duplicate key update gold = VALUES(gold);";
 
             console.log('*****',goldSql);
             sqlDao.exec(goldSql);
         }
+
+
+
+
         this.changeState(GameState.GAME_START, consts.bjl.show_result_time * 1000);
         log('\n');
         log('next:下一局 ',consts.bjl.show_result_time,'秒之后开始----------------------------');

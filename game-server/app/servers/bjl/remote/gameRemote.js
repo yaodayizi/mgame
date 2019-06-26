@@ -21,10 +21,10 @@ GameRemote.prototype.enterGame = function (msg, cb) {
 
 
 
-GameRemote.prototype.kick = function (data, cb) {
+GameRemote.prototype.kick = function (data,cb) {
     console.log('GameRemote.kick caught >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
     roomManager.kick(data);
-    cb();
+    
 };
 
 

@@ -53,7 +53,7 @@ Handler.prototype.enterGame = function(msg,session,next){
 				
 				//session.set('roomid',ret.data.user.roomid);
 				//session.set('gameid',data.user.gameid);
-				session.on('closed', onPlayerLeave.bind(null, self.app));
+				session.on('closed', onClose.bind(null, self.app));
 				session.pushAll();
 				console.log('session',session.settings);
 				
@@ -66,9 +66,9 @@ Handler.prototype.enterGame = function(msg,session,next){
 
 
 
-var onPlayerLeave = function (app, session) {
+var onClose = function (app, session) {
 
-    console.log('用户离开 entryHandler.js onPlayerLeave .......................');
+    console.log('用户离开 entryHandler.js onPlayerKick .......................');
 
     var sessionService = app.get('sessionService');
 
@@ -97,11 +97,6 @@ var onPlayerLeave = function (app, session) {
 
 };
 
-
-
-Handler.prototype.travellerLogin = function(msg,session,next){
-
-}
 
 
 Handler.prototype.login = async function(msg,session,next){

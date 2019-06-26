@@ -6,7 +6,7 @@ var roomidArr = [];
 let roomid = 0;
 let exp = module.exports;
 
-var createRoom = function(roomid,roomName,config){
+exp.createRoom = function(roomid,roomName,config){
         let room = new Room(roomid,roomName,config);
         roomList[roomid] = room;
         roomidArr.push(roomid);
@@ -14,29 +14,30 @@ var createRoom = function(roomid,roomName,config){
         //room.initGame();
 }
 
-var createRoomList = function(){
+exp.createRoomList = function(){
     _.forEach(bjlConfig.roomList,function(val,key){
         
         let config = bjlConfig.roomConfig[key];
         for(let i=val.start;i<=val.end;i++){
             roomid++;
-            let room = createRoom(roomid,val.name+i,config);  
-            room.initGame();  
+            if(!this.getRoomById(roomid)){
+                let room = this.createRoom(roomid,val.name+i,config);  
+                room.initGame();  
+            }
         }
 
-    });
+    }.bind(this));
 }
 
 exp.enterGame = function(msg){
     
     if(roomidArr.length==0){
-        roomid++;
-        //let room =  createRoom(roomid,bjlConfig.roomList[0].name+roomid,bjlConfig.roomConfig[0]);
-        //room.initGame();
-        //process.nextTick(createRoomList);
-        createRoomList();
+        //roomid++;
+        this.createRoomList();
     }
-    
+    if(msg.roomid){
+        return this.joinRoom(msg.uid,msg.serverid,msg.roomid);
+    }
     return this.getAllRoomData();
 }
 
@@ -65,7 +66,7 @@ exp.getRoomById = function (roomid) {
 
 exp.kick = function(msg){
     var room = this.getRoomById(msg.roomid);
-    room.kickPlayer(msg.uid,msg.serverid);
+    return room.kickPlayer(msg.uid,msg.serverid);
 }
 
 exp.bet = function(uid,roomid,pos,coin,chipType,num){
@@ -77,13 +78,15 @@ exp.bet = function(uid,roomid,pos,coin,chipType,num){
  */
 exp.getRoomData = function(roomid,num){
     let room = this.getRoomById(roomid);
-    let ret = {
-        roomid:roomid,
-        roomName:room.roomName,
-        roomConfig:room.roomConfig,
-        roadData:room.getRoadData(num)
+    if(room){
+        let ret = {
+            roomid:roomid,
+            roomName:room.roomName,
+            roomConfig:room.roomConfig,
+            roadData:room.getRoadData(num)
+        }
+        return ret;
     }
-    return ret;
 }
 
 exp.getAllRoomData = function(num=null){

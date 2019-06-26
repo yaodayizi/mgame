@@ -12,8 +12,8 @@ function SimpleFsm(){
 uitl.inherits(SimpleFsm,EventEmiter);
 SimpleFsm.prototype.__changeState = function(state){
     if(this.curState){
-        this.emit(this.curState+'Leava');
-        console.log(this.curState+'Leava');
+        this.emit(this.curState+'leave');
+        console.log(this.curState+'leave');
     }
     
     this.curState = state;
