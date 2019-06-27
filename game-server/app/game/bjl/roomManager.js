@@ -1,6 +1,7 @@
 const Room = require("./Room.js");
 const bjlConfig = require("../../consts/consts.js").bjl;
 const _ = require("lodash");
+const P = require("bluebird");
 var roomList = {};
 var roomidArr = [];
 let roomid = 0;
@@ -35,9 +36,9 @@ exp.enterGame = function(msg){
         //roomid++;
         this.createRoomList();
     }
-    if(msg.roomid){
+/*     if(msg.roomid && parseInt(msg.roomid)>0){
         return this.joinRoom(msg.uid,msg.serverid,msg.roomid);
-    }
+    } */
     return this.getAllRoomData();
 }
 
@@ -45,7 +46,7 @@ exp.enterGame = function(msg){
 
 exp.joinRoom = function(uid,serverid,roomid){
     let room;
-    if(roomid){
+    if(roomid && roomid>0){
         room = this.getRoomById(roomid);
         if(!room){
             room = this.getRoomById(1);
@@ -69,6 +70,15 @@ exp.kick = function(msg){
     return room.kickPlayer(msg.uid,msg.serverid);
 }
 
+exp.leaveRoom = function(msg){
+    var room = this.getRoomById(msg.roomid);
+    if(room.isCanExit(msg.uid)){
+       return  room.kickPlayer(msg.uid,msg.serverid);
+    }else{
+       return P.resolve(false);
+    }   
+}
+
 exp.bet = function(uid,roomid,pos,coin,chipType,num){
     return  roomList[roomid].bet(uid,pos,coin,chipType,num);
 }
@@ -83,7 +93,7 @@ exp.getRoomData = function(roomid,num){
             roomid:roomid,
             roomName:room.roomName,
             roomConfig:room.roomConfig,
-            roadData:room.getRoadData(num)
+            history:room.getRoadData(num)
         }
         return ret;
     }

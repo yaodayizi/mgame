@@ -26,7 +26,7 @@ var Room = function(roomid,roomName,roomConfig,gameid=1000) {
     //用户列表
     this.playerList = {};
     //已下注 游戏未结束 已离开或已掉线用户
-    this.playerList = {};
+    this.playerOffList = {};
     //下注列表
     this.betList = {};
     //赔付
@@ -51,20 +51,25 @@ var Room = function(roomid,roomName,roomConfig,gameid=1000) {
 }
 
 Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
-    //todo:检测player是否在某个房间
+    //todo:检测player是否在这个房间
     if(!this.channel.getMember(uid)){
         this.channel.add(uid, serverid);
     }
     
     //如果在已离线列表 移除
-    if(this.playerList[uid]){
-        delete this.playerList[uid];
+    if(this.playerOffList.hasOwnProperty(uid)){
+        delete this.playerOffList[uid];
     }
 
     let user = await redisUtil.getUserAsync(uid);
     user.roomid = this.roomid;
     user.serverid = serverid;
     user.gameid = this.gameid;
+/*     await redisUtil.setUserAsync({
+        userid:user.userid,
+        gameid:user.gameid,
+        roomid:user.roomid
+    }) */
     ret = {user:user};
     
     this.playerList[uid] = user;
@@ -76,10 +81,10 @@ Room.prototype.addPlayer = async function (uid,serverid,cb = null) {
 Room.prototype.kickPlayer = async function (uid, serverid, cb = null) {
     this.channel.leave(uid, serverid);
     //已下注 游戏未结束 暂时不从此房间删除用户 结算完毕再删除用户
-    if(!this.userBets[uid] || this.getGameState == GameState.GAME_END){
+    if(!this.userBets[uid] || this.getGameState() == GameState.GAME_END){
         delete this.playerList[uid];
     }else{
-        this.playerList[uid] = uid;
+        this.playerOffList[uid] = uid;
     }
 
 
@@ -90,6 +95,7 @@ Room.prototype.kickPlayer = async function (uid, serverid, cb = null) {
 
     return uid;
 }
+
 
 Room.prototype.bet = async function (uid, pos, coin,chipType,num,cb) {
     
@@ -153,8 +159,8 @@ Room.prototype.initGame = function () {
     timeFsm.changeState(GameState.GAME_START, 0);
     timeFsm.on(GameState.GAME_START + "Enter", function () {
         //log('gameStart',this.curState);
-        log('游戏开始');
-        this.roundID = Date.now();
+        log(self.roomid,'游戏开始');
+        self.roundID = Date.now()+Math.round(Math.random()*9999);
         self.betList = {};
         self.paid = {};
         self.userBets ={};
@@ -166,29 +172,29 @@ Room.prototype.initGame = function () {
         playerCards = [];
         bankerCards = [];
 
-        log('发牌');
+        log(self.roomid,'发牌');
         playerCards.push(baijiale.getCard());
         bankerCards.push(baijiale.getCard());
         playerCards.push(baijiale.getCard());
         bankerCards.push(baijiale.getCard());
 
-        log('发牌结束');
+        log(self.roomid,'发牌结束');
         this.changeState(GameState.GAME_BET, 0);
     }.bind(timeFsm));
 
     timeFsm.on(GameState.GAME_BET + "Enter", function () {
-        log('下注时间');
+        log(self.roomid,'下注时间');
         self.channel.pushMessage(GameState.GAME_BET + "Enter", {bet_time:consts.bjl.bet_time}, null);
         this.changeState(GameState.GAME_CHECK, consts.bjl.bet_time * 1000);
     });
 
     timeFsm.on(GameState.GAME_BET + "leave", function () {
-        log("下注结束");
+        log(self.roomid,"下注结束");
         self.channel.pushMessage(GameState.GAME_BET + "leave", {msg:'bet_end'}, null);
     });
 
     timeFsm.on(GameState.GAME_CHECK + "Enter", function () {
-        log("检查牌");
+        log(self.roomid,"检查牌");
         //cardsToString(player);
         //cardsToString(banker);
         let isplayerDrawCard = baijiale.isPlayerDrawCard(playerCards);
@@ -217,7 +223,7 @@ Room.prototype.initGame = function () {
         bankerValue = baijiale.calculateHandValue(bankerCards);
         log(`plalyer:${playerValue}  banker:${bankerValue}`);
         let ret = baijiale.calculateAll(playerCards, bankerCards);
-        log(ret);
+        log(self.roomid,'gameend',ret);
 
         //计算赔付
         let pos =0;
@@ -278,12 +284,14 @@ Room.prototype.initGame = function () {
 
         let betPaid = {};
         let sqls = [];
+        let goldSqls = [];
+        let betSqls = [];
         //insert into t_user (userid,gold) values (1,10000),(4,9998)  on duplicate key update gold = VALUES(gold);
        _.forEach(self.userBets,function(val,uid){
            betPaid[uid] = {bet:0,paid:0,gold:self.playerList[uid].gold};
            betPaid[uid].bet = self.userBets[uid];
-           let sql = "("+uid+","+self.playerList[uid].gold+")";
-           sqls.push(sql);
+           let sql = `('${uid}','${self.playerList[uid].gold}')`;
+           goldSqls.push(sql);
        }.bind(self));
 
        _.forEach(self.paid,function(val,pos){
@@ -295,10 +303,16 @@ Room.prototype.initGame = function () {
            });
        });
 
-
+       _.forEach(betPaid,function(val,uid){
+            //uid,gameid,roomid,roundid,bet,paid
+           let str = [uid,self.gameid,self.roomid,self.roundID,val.bet,val.paid].join("','");
+           str = `('${str}')`;
+           betSqls.push(str);
+       }.bind(self));
 
        //路书数据
-       self.history.roadData.push(historyWin+'|'+historyPair+'|'+bankerValue+'|'+playerValue);
+       let gameInfo = historyWin+'|'+historyPair+'|'+bankerValue+'|'+playerValue;
+       self.history.roadData.push(gameInfo);
        self.history.count.num++;
        let res = {
             result: ret,
@@ -317,24 +331,41 @@ Room.prototype.initGame = function () {
         }
 
         //删除已离开用户
-        _.forEach(this.playerList,function(uid,key){
-            delete this.plyaerList[uid];
+        _.forEach(self.playerOffList,function(uid,key){
+            delete self.playerList[uid];
+            delete self.playerOffList[uid];
         }.bind(this));
 
         self.channel.pushMessage(GameState.GAME_END,res, null);
-        if(sqls.length){
-            let goldSql = "insert into t_user (userid,gold) values "+ sqls.join(',')+" on duplicate key update gold = VALUES(gold);";
-
-            console.log('*****',goldSql);
-            sqlDao.exec(goldSql);
+        if(goldSqls.length>0){
+            let goldSql = `insert into t_user (userid,gold) values  ${goldSqls.join(',')} on duplicate key update gold = VALUES(gold)`;
+            sqls.push(goldSql);
         }
 
+        if(betSqls.length>0){
+            let betSql = `insert into t_bet (uid,gameid,roomid,roundid,bet,paid) values ${betSqls.join(',')}`
+            sqls.push(betSql);
+        }
 
+        if(betSqls.length>0){
+            let gameSql = `insert into t_game (gameid,roomid,room_name,roundid,game_info) VALUES('${self.gameid}','${self.roomid}','${self.roomName}','${self.roundID}','${gameInfo}')`;
+            sqls.push(gameSql);
+        }
 
+        if(sqls.length>0){
+            //let sqlsStr = sqls.join(';');
+            //console.log('=========================',sqlsStr);
+            for(let i=0;i<sqls.length;i++){
+                console.log('=========================',sqls[i]);
+                sqlDao.exec(sqls[i]).then((ret)=>console.log(ret)).catch((e)=>console.log(e));
+                console.log('=========================',ret);
+            }
+            
+        }
 
         this.changeState(GameState.GAME_START, consts.bjl.show_result_time * 1000);
         log('\n');
-        log('next:下一局 ',consts.bjl.show_result_time,'秒之后开始----------------------------');
+        log(self.roomid,'next:下一局 ',consts.bjl.show_result_time,'秒之后开始----------------------------');
 
     });
 }
@@ -365,9 +396,16 @@ Room.prototype.getGameState = function(){
 }
 
 Room.prototype.getRoadData = function(count=50){
-    return this.history.roadData.slice(-count);
+    return {roadData:this.history.roadData.slice(-count),count:this.history.count};
 }
 
+Room.prototype.isCanExit = function(uid){
+    if(this.userBets[uid] && this.getGameState()!=GameState.GAME_END){
+        return false;
+    }else{
+        return true;
+    }
+}
 
 module.exports = Room;
 
