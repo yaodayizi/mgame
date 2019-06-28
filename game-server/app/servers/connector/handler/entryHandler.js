@@ -90,9 +90,9 @@ var onClose = function (app, session) {
 			uid,
 			serverid
 		};
-    app.rpc.bjl.gameRemote.kick(session, data, function() {
+    app.rpc.bjl.gameRemote.kick(session, data, function(ret) {
         console.log('caught kickPlayer callback.................');
-        console.warn('玩家 ' + data.playerId + ' 的连接断开了！');
+        console.warn('玩家 ' + ret + ' 的连接断开了！');
     });
 
 };

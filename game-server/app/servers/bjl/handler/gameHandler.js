@@ -46,11 +46,8 @@ handler.leaveRoom = function(msg,session,next){
     msg.uid = uid;
     msg.serverid = serverid;
     msg.roomid = roomid;
-    roomManager.leaveRoom(msg).then(function(ret){
-        next(null,ret);
-    }).catch(function(e){
-        next(null,e);
-    });
+    let ret = roomManager.leaveRoom(msg);
+    next(null,ret);
    
 }
 

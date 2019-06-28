@@ -86,6 +86,17 @@ exp.bet = function(uid,roomid,pos,coin,chipType,num){
 /**
  * 得到ROOM数据
  */
+exp.getRoomRoadData = function(roomid,num){
+    let room = this.getRoomById(roomid);
+    if(room){
+        let ret = {
+            roomid:roomid,
+            history:room.getRoadData(num)
+        }
+        return ret;
+    }
+}
+
 exp.getRoomData = function(roomid,num){
     let room = this.getRoomById(roomid);
     if(room){
@@ -93,11 +104,11 @@ exp.getRoomData = function(roomid,num){
             roomid:roomid,
             roomName:room.roomName,
             roomConfig:room.roomConfig,
-            history:room.getRoadData(num)
         }
         return ret;
     }
 }
+
 
 exp.getAllRoomData = function(num=null){
     let retArr = [];
