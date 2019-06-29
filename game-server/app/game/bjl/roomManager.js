@@ -46,6 +46,10 @@ exp.enterGame = function(){
 
 exp.joinRoom = function(uid,serverid,roomid){
     let room;
+    if(roomidArr.length==0){
+        //roomid++;
+        this.createRoomList();
+    }
     if(roomid && roomid>0){
         room = this.getRoomById(roomid);
         if(!room){

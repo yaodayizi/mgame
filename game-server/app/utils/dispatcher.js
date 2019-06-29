@@ -1,7 +1,7 @@
 // var crc = require('crc');
 
 module.exports.dispatch = function (uid, servers) {
-    return servers[0];
+    //return servers[0];
     var index = Number(uid) % servers.length;
     // console.log('dispatch >>>>>>>>>>>>>>>>>>');
     // console.log(uid);

@@ -1,4 +1,5 @@
 var pomelo = require('pomelo');
+var routeUtil = require("./app/utils/routeUtil.js");
 
 /**
  * Init app for client.
@@ -31,6 +32,8 @@ app.configure('production|development', 'bjl', function () {
           connector: pomelo.connectors.hybridconnector,
           useProtobuf: true
       });
+   app.route('bjl', routeUtil.bjl);
+
 });
 
 app.configure('production|development',function(){

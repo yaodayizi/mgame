@@ -42,7 +42,7 @@ Handler.prototype.enterGame = function(msg,session,next){
 		session.bind(uid);
 		session.set('uid', uid);
 		session.set('serverid', serverid);
-		
+
 		var self = this;
 		this.app.rpc.bjl.gameRemote.enterGame(session,{},function(err,ret){
 			if(err){
