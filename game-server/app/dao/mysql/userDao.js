@@ -6,22 +6,20 @@ var self = this;
 
 userDao.getDb = function(){
     if(!userDao.db){
-        if(process.env.NODE_ENV == 'production' || process.env.NODE_ENV === 'development'){
+ //       if(process.env.NODE_ENV == 'production' || process.env.NODE_ENV === 'development'){
             userDao.db = pomelo.app.get('dbclient');
             console.log(userDao,pomelo.app.get('dbclient'));
-        }
+/*         }
         else{
             var mysql = require("./mysql.js");
             mysql.create();
             userDao.db = mysql;
            
-        }
+        } */
     }
     return userDao.db;
 }
 
-
-//console.log(process.env.NODE_ENV,'00000------',userDao.db);
 
 userDao.login = async function(username,password){
     var sql = "select * from t_user where user_name = ?  limit 0,1";

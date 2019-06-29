@@ -3,17 +3,18 @@ var pomelo = require('pomelo');
 var mqlMgr = {};
 
 mqlMgr.create = function() {
-    if(process.env.NODE_ENV == 'production' || process.env.NODE_ENV === 'development'){
+    //if(process.env.NODE_ENV == 'production' || process.env.NODE_ENV == 'development'){
+        console.log(process.env.NODE_ENV);
         var mysqlConfig = pomelo.app.get('mysql');
-    }else {
+    /*} else {
         var mysqlConfig =  {
             "host" : "127.0.0.1",
               "port" : "3306",
               "database" : "mgame",
               "user" : "root",
               "password" : "root"
-          }
-    }
+          } 
+    }*/
     var pool = mysql.createPool(mysqlConfig);
     this.pool = pool;
 };
