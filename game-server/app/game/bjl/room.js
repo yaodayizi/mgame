@@ -57,7 +57,37 @@ var Room = function (roomid, roomName, roomConfig, gameid = 1000) {
     this.gameEndData = null;
     console.log(this.roomid, this.roomName, this.roomConfig, 'room create');
 }
-
+/**
+ * 加入游戏
+ * @param  {int} uid
+ * @param  {string} serverid
+ * @param  {function} cb=null
+ * @returns {
+ * {   
+ *  roomid: any;
+ *  roomName: any;
+ *  roomConfig: any;
+ *  user: any;
+ *  roadData: {
+ *       roadData: Array<String>;
+ *       count: {
+ *           num: number;
+ *           tie: number;
+ *           banker: number;
+ *           player: number;
+ *           bankerPair: number;
+ *           playerPair: number;
+ *       };
+ *   };
+ *    gameState: {
+ *     state: string;
+ *     time: number;
+ *     }
+ * }
+ * }
+ * 
+ * 
+ */
 Room.prototype.addPlayer = async function (uid, serverid, cb = null) {
     //todo:检测player是否在这个房间
     if (!this.channel.getMember(uid)) {
@@ -79,6 +109,7 @@ Room.prototype.addPlayer = async function (uid, serverid, cb = null) {
         user: user
     });
     playerLogger('   join room', uid, user.roomid);
+ 
     let ret = {
         roomid: this.roomid,
         roomName: this.roomName,
@@ -442,7 +473,13 @@ Room.prototype.computerPaid = async function (pos, odds) {
 Room.prototype.isCanBet = function () {
     return timeFsm.getState().state == GameState.GAME_BET;
 }
-
+/**
+ * 得到游戏状态
+ * @returns {{
+ *  state: string;
+ *  time: number;
+}}
+ */
 Room.prototype.getGameState = function () {
     return timeFsm.getState();
 }

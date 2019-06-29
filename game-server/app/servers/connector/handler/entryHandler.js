@@ -14,7 +14,8 @@ var Handler = function(app) {
 };
 
 /**
- * @param  {token,gameType} msg
+ * 进入游戏
+ * @param  {{token,gameType}} msg
  * @param  {} session
  * @param  {} next
  */
@@ -29,9 +30,6 @@ Handler.prototype.enterGame = function(msg,session,next){
 			next(null,{code:500,msg:e.msg});
 		}
 		let uid = decode.userid;
-		msg.uid = uid;
-		msg.serverid = serverid;
-		msg.gameid = gameid;
 		//msg.isTraveller = decode.isTraveller;
 		var sessionService = this.app.get('sessionService');
         if (sessionService.getByUid(uid)) {
@@ -46,7 +44,7 @@ Handler.prototype.enterGame = function(msg,session,next){
 		session.set('serverid', serverid);
 		
 		var self = this;
-		this.app.rpc.bjl.gameRemote.enterGame(session,msg,function(err,ret){
+		this.app.rpc.bjl.gameRemote.enterGame(session,{},function(err,ret){
 			if(err){
 				next(null,{err:err.msg});
 			}else{
@@ -98,18 +96,18 @@ var onClose = function (app, session) {
 };
 
 
-
+/**
+ * 登录
+ * @param  {{usrename,password}} msg
+ * @param  {} session
+ * @param  {} next
+ */
 Handler.prototype.login = async function(msg,session,next){
 	if(!msg.username|| !msg.password){
 		next(null,{code:500,err:{msg:'请填写用户名密码'}});	
 	}
-	try{
-		var user = await userDao.login(msg.username,msg.password);
 
-	}catch(e){
-		next(null,{code:500,err:e});
-		return;
-	}
+	var user = await userDao.login(msg.username,msg.password);
 
 	if(user === false){
 		next(null,{code:500,err:{msg:'用户名密码错误'}});

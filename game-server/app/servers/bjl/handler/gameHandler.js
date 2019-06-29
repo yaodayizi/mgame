@@ -10,6 +10,14 @@ var Handler = function (app) {
 
 var handler = Handler.prototype;
 
+
+/**
+ * 下注
+ * @param  {{pos,coin,chipType,num}} msg  pos下注位置,coin 金币,chipType 筹码,num 筹码个数
+ * @param  {} session
+ * @param  {} next
+ * @returns {string} OK成功 其他为失败消息
+ */
 handler.bet = function(msg,session,next){
     let uid = session.get('uid');
     let roomid = session.get('roomid');
@@ -22,7 +30,12 @@ handler.bet = function(msg,session,next){
 }
 
 
-
+/**
+ * 加入房间
+ * @param  {{roomid}} msg  
+ * @param  {} session
+ * @param  {} next
+ */
 handler.joinRoom = function(msg,session,next){
     let uid = session.get('uid');
     let serverid = session.get('serverid');
@@ -37,7 +50,13 @@ handler.joinRoom = function(msg,session,next){
     });
 }
 
-
+/**
+ * 离开房间
+ * @param  {{}} msg
+ * @param  {} session
+ * @param  {} next
+ * 
+ */
 handler.leaveRoom = function(msg,session,next){
     let uid = session.get('uid');
     let serverid = session.get('serverid');
@@ -51,6 +70,12 @@ handler.leaveRoom = function(msg,session,next){
    
 }
 
+/**
+ * 得到所有房间信息
+ * @param  {{num }} msg num 历史数据条数
+ * @param  {} session
+ * @param  {} next
+ */
 handler.getAllRoomData = function(msg,session,next){
     let roomid = session.get('roomid');
     let ret = roomManager.getAllRoomData(roomid,msg.num);

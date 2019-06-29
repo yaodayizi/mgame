@@ -30,7 +30,7 @@ exp.createRoomList = function(){
     }.bind(this));
 }
 
-exp.enterGame = function(msg){
+exp.enterGame = function(){
     
     if(roomidArr.length==0){
         //roomid++;
@@ -84,7 +84,7 @@ exp.bet = function(uid,roomid,pos,coin,chipType,num){
 }
 
 /**
- * 得到ROOM数据
+ * 得到ROOM历史数据
  */
 exp.getRoomRoadData = function(roomid,num){
     let room = this.getRoomById(roomid);
