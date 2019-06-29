@@ -8,7 +8,7 @@ userDao.getDb = function(){
     if(!userDao.db){
  //       if(process.env.NODE_ENV == 'production' || process.env.NODE_ENV === 'development'){
             userDao.db = pomelo.app.get('dbclient');
-            console.log(userDao,pomelo.app.get('dbclient'));
+            //console.log(userDao,pomelo.app.get('dbclient'));
 /*         }
         else{
             var mysql = require("./mysql.js");

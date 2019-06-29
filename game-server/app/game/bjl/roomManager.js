@@ -75,7 +75,7 @@ exp.leaveRoom = function(msg){
     if(room.isCanExit(msg.uid)){
        return  room.kickPlayer(msg.uid,msg.serverid);
     }else{
-       return P.resolve(false);
+       return false;
     }   
 }
 

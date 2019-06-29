@@ -352,7 +352,7 @@ Room.prototype.initGame = function () {
         _.forEach(self.playerOffList, function (uid, key) {
             delete self.playerList[uid];
         }.bind(this));
-        self.playerOffList[uid] = {};
+        self.playerOffList = {};
 
         if (goldSqls.length > 0) {
             let goldSql = `insert into t_user (userid,gold) values  ${goldSqls.join(',')} on duplicate key update gold = VALUES(gold)`;
