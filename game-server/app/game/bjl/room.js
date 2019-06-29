@@ -17,7 +17,7 @@ let {
     roomConfig
 } = consts.bjl;
 let log = console.log;
-log = function(){};
+log = function () {};
 
 var Room = function (roomid, roomName, roomConfig, gameid = 1000) {
     this.roomConfig = roomConfig;
@@ -75,9 +75,11 @@ Room.prototype.addPlayer = async function (uid, serverid, cb = null) {
     user.gameid = this.gameid;
     this.playerList[uid] = user;
 
-    this.channel.pushMessage('playerEnter', {user:user});
-    playerLogger('   join room', uid,user.roomid);
-    let ret =  {
+    this.channel.pushMessage('playerEnter', {
+        user: user
+    });
+    playerLogger('   join room', uid, user.roomid);
+    let ret = {
         roomid: this.roomid,
         roomName: this.roomName,
         roomConfig: this.roomConfig,
@@ -85,11 +87,11 @@ Room.prototype.addPlayer = async function (uid, serverid, cb = null) {
         roadData: this.getRoadData(),
         gameState: this.getGameState()
     };
-    if(ret.gameState.state == GameState.GAME_END ){
+    if (ret.gameState.state == GameState.GAME_END) {
         ret.gameState.gameEndData = this.gameEndData;
     }
-    if(ret.gameState.state == GameState.GAME_BET){
-        ret.gameState.state +='Enter';
+    if (ret.gameState.state == GameState.GAME_BET) {
+        ret.gameState.state += 'Enter';
     }
     return ret;
 }
@@ -108,7 +110,7 @@ Room.prototype.kickPlayer = function (uid, serverid) {
     this.channel.pushMessage('playerLeave', {
         uid: uid
     }, null);
-    playerLogger('  playerLeave', 'kick',uid,serverid);
+    playerLogger('  playerLeave', 'kick', uid, serverid);
     return uid;
 }
 
@@ -155,13 +157,13 @@ Room.prototype.bet = async function (uid, pos, coin, chipType, num, cb) {
         num: num
     }
 
-    
+
 
     let ret = await redisUtil.setUserAsync({
         "userid": uid,
         "gold": this.playerList[uid].gold
     });
-    playerLogger('  bet',this.roomid,uid,pos,coin,chipType,num);
+    playerLogger('  bet', this.roomid, uid, pos, coin, chipType, num);
     this.channel.pushMessage(GameState.GAME_BET, userBet, null);
     return ret;
 
@@ -242,7 +244,7 @@ Room.prototype.initGame = function () {
     });
 
 
-    timeFsm.on(GameState.GAME_END + "Enter", function () {
+    timeFsm.on(GameState.GAME_END + "Enter", async function () {
 
         playerValue = baijiale.calculateHandValue(playerCards);
         bankerValue = baijiale.calculateHandValue(bankerCards);
@@ -321,6 +323,16 @@ Room.prototype.initGame = function () {
             betPaid[uid].bet = self.userBets[uid];
             let sql = `('${uid}','${self.playerList[uid].gold}')`;
             goldSqls.push(sql);
+            redisUtil.setUserAsync({
+                userid: uid,
+                gold: self.playerList[uid].gold
+            }).then(
+                //ret=>console.log('redisRet',ret)
+            ).catch(
+                e => console.log('err', e)
+            );
+
+
         }.bind(self));
 
         _.forEach(self.paid, function (val, pos) {
@@ -374,7 +386,9 @@ Room.prototype.initGame = function () {
             //console.log('=========================',sqlsStr);
             for (let i = 0; i < sqls.length; i++) {
                 console.log('=========================', sqls[i]);
-                sqlDao.exec(sqls[i]).then((ret) => console.log(ret)).catch((e) => console.log(e));
+                sqlDao.exec(sqls[i]).then(
+                    ret => console.log(ret.affectedRows)
+                ).catch(e => console.log(e));
             }
 
         }
@@ -421,10 +435,6 @@ Room.prototype.computerPaid = async function (pos, odds) {
             coin: coin,
             gold: this.playerList[key].gold
         };
-        redisUtil.setUserAsync({
-            userid: key,
-            gold: this.playerList[key].gold
-        });
 
     }.bind(this));
 };
