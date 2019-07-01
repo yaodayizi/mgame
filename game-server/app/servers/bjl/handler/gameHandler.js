@@ -67,7 +67,6 @@ handler.leaveRoom = function(msg,session,next){
     msg.roomid = roomid;
     let ret = roomManager.leaveRoom(msg);
     next(null,ret);
-   
 }
 
 /**

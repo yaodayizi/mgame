@@ -28,6 +28,7 @@ Handler.prototype.enterGame = function(msg,session,next){
 			decode = jwt.verify(token,consts.jwtkey);
 		}catch(e){
 			next(null,{code:500,msg:e.msg});
+			return;
 		}
 		let uid = decode.userid;
 		//msg.isTraveller = decode.isTraveller;
@@ -58,6 +59,7 @@ Handler.prototype.enterGame = function(msg,session,next){
 				//console.log('join game ',ret.data.user.user_name);
 				next(null,ret);
 			}
+			return;
 		});
 
 }
@@ -105,12 +107,14 @@ var onClose = function (app, session) {
 Handler.prototype.login = async function(msg,session,next){
 	if(!msg.username|| !msg.password){
 		next(null,{code:500,err:{msg:'请填写用户名密码'}});	
+		return false;
 	}
 
 	var user = await userDao.login(msg.username,msg.password);
 
 	if(user === false){
 		next(null,{code:500,err:{msg:'用户名密码错误'}});
+		return false;
 	}else{
 		var token = jwt.sign({userid:user.userid,isTraveller:false},consts.jwtkey,{expiresIn:'36h'});
 		var ret = {
@@ -126,6 +130,7 @@ Handler.prototype.login = async function(msg,session,next){
 			code:200,
 			data:{user:ret}
 		});
+		return;
 	}
 };
 
@@ -150,6 +155,7 @@ Handler.prototype.guestLogin = async function(msg,session,next){
 		code:200,
 		data:{user:user}
 	});
+	return;
 }
 
 

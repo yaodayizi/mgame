@@ -45,6 +45,7 @@ handler.queryEntry = function (msg, session, next) {
         code: 200,
         host: res.host,
         port: res.clientPort
-    });
+	});
+	return;
 };
 

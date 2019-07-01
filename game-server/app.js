@@ -39,7 +39,7 @@ app.configure('production|development', 'bjl', function () {
 app.configure('production|development',function(){
 	  app.loadConfig("mysql", app.getBase() + "/config/mysql.json");
     var dbclient = require("./app/dao/mysql/mysql.js");
-    dbclient.create()
+    dbclient.create();
     app.set("dbclient", dbclient);
 });
 
