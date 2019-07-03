@@ -108,7 +108,7 @@ Room.prototype.addPlayer = async function (uid, serverid, cb = null) {
     this.channel.pushMessage('playerEnter', {
         user: user
     });
-    playerLogger('   join room', uid, user.roomid);
+    playerLogger('   join game', uid, user.roomid);
  
     let ret = {
         roomid: this.roomid,
@@ -136,8 +136,6 @@ Room.prototype.kickPlayer = function (uid, serverid) {
         this.playerOffList[uid] = uid;
     }
 
-
-    //let ret = await redisUtil.setUserAsync({userid:uid,roomid:0,serverid:0});
     this.channel.pushMessage('playerLeave', {
         uid: uid
     }, null);
@@ -178,7 +176,8 @@ Room.prototype.bet = async function (uid, pos, coin, chipType, num, cb) {
 
     this.betList[pos][uid] += coin;
     this.userBets[uid] += coin;
-    this.playerList[uid].gold -= coin;
+    let ret =  redisUtil.setGoldIncr(uid,-coin);
+    this.playerList[uid].gold = ret;
 
     let userBet = {
         uid: uid,
@@ -188,15 +187,9 @@ Room.prototype.bet = async function (uid, pos, coin, chipType, num, cb) {
         num: num
     }
 
-
-
-    let ret = await redisUtil.setUserAsync({
-        "userid": uid,
-        "gold": this.playerList[uid].gold
-    });
-    playerLogger('  bet', this.roomid, uid, pos, coin, chipType, num);
+    playerLogger('  bet', ret,this.roomid, uid, pos, coin, chipType, num);
     this.channel.pushMessage(GameState.GAME_BET, userBet, null);
-    return ret;
+    return 'OK';
 
 }
 
@@ -352,16 +345,14 @@ Room.prototype.initGame = function () {
                 gold: self.playerList[uid].gold
             };
             betPaid[uid].bet = self.userBets[uid];
-            let sql = `('${uid}','${self.playerList[uid].gold}')`;
-            goldSqls.push(sql);
-            redisUtil.setUserAsync({
+/*             redisUtil.setUserAsync({
                 userid: uid,
                 gold: self.playerList[uid].gold
             }).then(
                 //ret=>console.log('redisRet',ret)
             ).catch(
                 e => console.log('err', e)
-            );
+            ); */
 
 
         }.bind(self));
@@ -377,6 +368,10 @@ Room.prototype.initGame = function () {
 
         _.forEach(betPaid, function (val, uid) {
             //uid,gameid,roomid,roundid,bet,paid
+            let sql = `('${uid}','${parseInt(val.paid - val.bet)}')`;
+            goldSqls.push(sql);
+
+
             let str = [uid, self.gameid, self.roomid, self.roundID, val.bet, val.paid].join("','");
             str = `('${str}')`;
             betSqls.push(str);
@@ -398,7 +393,8 @@ Room.prototype.initGame = function () {
         self.playerOffList = {};
 
         if (goldSqls.length > 0) {
-            let goldSql = `insert into t_user (userid,gold) values  ${goldSqls.join(',')} on duplicate key update gold = VALUES(gold)`;
+            //insert into t_user (userid,gold) values (1,-20) on duplicate key update gold =gold + VALUES(gold)
+            let goldSql = `insert into t_user (userid,gold) values  ${goldSqls.join(',')} on duplicate key update gold =gold + VALUES(gold)`;
             sqls.push(goldSql);
         }
 
@@ -421,7 +417,6 @@ Room.prototype.initGame = function () {
                     ret => console.log(ret.affectedRows)
                 ).catch(e => console.log(e));
             }
-
         }
 
 
@@ -459,7 +454,8 @@ Room.prototype.computerPaid = async function (pos, odds) {
     if (!this.betList[pos]) return;
     _.forEach(this.betList[pos], function (val, key) {
         let coin = val + val * odds;
-        this.playerList[key].gold += coin;
+        let ret  = redisUtil.setGoldIncr(key,coin);
+        this.playerList[key].gold = ret;
         this.paid[pos] = {};
         this.paid[pos][key] = {
             val: val,

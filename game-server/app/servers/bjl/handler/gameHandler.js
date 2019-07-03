@@ -1,4 +1,5 @@
 var roomManager = require('../../../game/bjl/roomManager.js');
+var _ = require("lodash");
 
 module.exports = function (app) {
     return new Handler(app);
@@ -40,6 +41,10 @@ handler.joinRoom = function(msg,session,next){
     let uid = session.get('uid');
     let serverid = session.get('serverid');
     let roomid = msg.roomid;
+    if(!parseInt(msg.roomid)){
+        next(null,{code:500,msg:'error roomid'});
+        return;
+    }
 
     roomManager.joinRoom(uid,serverid,roomid).then(function(ret){
         session.set('roomid',ret.user.roomid);

@@ -1,5 +1,6 @@
-var redis = require('redis');
-var bluebrid = require("bluebird");
+var bluebird = require("bluebird");
+var redis = bluebird.promisifyAll(require('redis'));
+
 var redisConfig = require("../../config/redis.json");
 
 //const asyncRedis = require("async-redis");
@@ -13,7 +14,6 @@ redisUtil.redis = redis;
 
 
 redisUtil.client = null;
-redisUtil.asyncClient = null;
 redisUtil.userKeyPre = 'users_';
 /**
  * 创建redis客户端
@@ -39,7 +39,7 @@ redisUtil.create = function(config) {
 		console.log('warning',e);
 	})
 	//redisUtil.asyncClient = asyncRedis.decorate(redisUtil.client)
-	bluebrid.promisifyAll(redisUtil.client);
+	//bluebrid.promisifyAll(redisUtil.client);
 };
 
 
@@ -56,7 +56,13 @@ redisUtil.setUserField = function(uid,field,val,cb){
 	redisUtil.client.hmset(redisUtil.userKeyPre+uid,field,val,cb);
 }
 
-
+redisUtil.getRoomid =async function(){
+/* 	let multi = redisUtil.client.multi();
+	multi.incr('roomNumber').get('roomNumber');
+	let res =await  multi.execAsync();
+	console.log(res); */
+	return await redisUtil.client.incrAsync('roomNumber');
+}
 
 redisUtil.setUserAsync = async function(userData){
 	return await redisUtil.client.hmsetAsync(redisUtil.userKeyPre + userData.userid,userData);
@@ -66,13 +72,22 @@ redisUtil.getUserAsync = async function (uid){
 	return await redisUtil.client.hgetallAsync(redisUtil.userKeyPre + uid);
 }
 
+redisUtil.setGoldIncr = async function(uid,num){
+	return await redisUtil.client.hincrbyAsync(redisUtil.userKeyPre + uid,'gold',num);
+}
+
+//todo:暂时用development
 redisUtil.create(redisConfig.development);
 
 /*  async function test(){
-	let setRet = await redisUtil.setUserAsync({userid:'112233',name:'bbb',age:22});
+ 	let setRet = await redisUtil.setUserAsync({userid:'112233',name:'bbb',age:22});
 	console.log(setRet);
  	let user = await  redisUtil.getUserAsync('112233');
-	console.log(user);
+	console.log(user); 
+	let roomid  = await redisUtil.getRoomid();
+	console.log(roomid);
+	let ret22 = await redisUtil.setGoldIncr(1,20);
+	console.log(ret22);
 }
 
 test(); */

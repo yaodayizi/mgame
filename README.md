@@ -7,6 +7,14 @@ https://github.com/yaodayizi/mgame
 + redis  3.2
 
 mysql备份位置 mgame/res/mgame.sql 
+测试用户
+test1
+test2
+test3
+
+密码
+123456
+
 
 运行 
 cd mgame/game-server/
@@ -17,3 +25,4 @@ pomelo start
 https://github.com/yaodayizi/mgameclient
 
 egret 5.2.21
+

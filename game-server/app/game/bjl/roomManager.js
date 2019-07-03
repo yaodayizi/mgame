@@ -2,12 +2,14 @@ const Room = require("./Room.js");
 const bjlConfig = require("../../consts/consts.js").bjl;
 const _ = require("lodash");
 const P = require("bluebird");
+const redisUtil = require("../../dao/redisUtil.js");
+
 var roomList = {};
 var roomidArr = [];
-let roomid = 0;
 let exp = module.exports;
 
 exp.createRoom = function(roomid,roomName,config){
+        
         let room = new Room(roomid,roomName,config);
         roomList[roomid] = room;
         roomidArr.push(roomid);
@@ -20,7 +22,7 @@ exp.createRoomList = function(){
         
         let config = bjlConfig.roomConfig[key];
         for(let i=val.start;i<=val.end;i++){
-            roomid++;
+            let roomid =  redisUtil.getRoomid();
             if(!this.getRoomById(roomid)){
                 let room = this.createRoom(roomid,val.name+i,config);  
                 room.initGame();  
