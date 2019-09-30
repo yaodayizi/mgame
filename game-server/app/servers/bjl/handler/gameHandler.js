@@ -81,7 +81,6 @@ handler.leaveRoom = function(msg,session,next){
  * @param  {} next
  */
 handler.getAllRoomData = function(msg,session,next){
-    let roomid = session.get('roomid');
-    let ret = roomManager.getAllRoomData(roomid,msg.num);
-    next(null,ret);
+    let ret = roomManager.getAllRoomData(msg.num);
+    next(null,{code:200,data:ret});
 }

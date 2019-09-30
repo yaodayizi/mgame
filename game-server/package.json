@@ -9,7 +9,6 @@
         "pomelo": "2.2.5",
         "redis": "^2.8.0",
         "bluebird": "^3.5.5"
-
     },
     "devDependencies": {
         "cross-env": "^5.2.0",

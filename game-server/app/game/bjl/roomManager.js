@@ -1,7 +1,6 @@
 const Room = require("./Room.js");
 const bjlConfig = require("../../consts/consts.js").bjl;
 const _ = require("lodash");
-const P = require("bluebird");
 const redisUtil = require("../../dao/redisUtil.js");
 
 var roomList = {};
@@ -18,11 +17,11 @@ exp.createRoom = function(roomid,roomName,config){
 }
 
 exp.createRoomList = function(){
-    _.forEach(bjlConfig.roomList,function(val,key){
+    _.forEach(bjlConfig.roomList,async function(val,key){
         
         let config = bjlConfig.roomConfig[key];
         for(let i=val.start;i<=val.end;i++){
-            let roomid =  redisUtil.getRoomid();
+            let roomid =await redisUtil.getRoomid();
             if(!this.getRoomById(roomid)){
                 let room = this.createRoom(roomid,val.name+i,config);  
                 room.initGame();  
@@ -41,7 +40,7 @@ exp.enterGame = function(){
 /*     if(msg.roomid && parseInt(msg.roomid)>0){
         return this.joinRoom(msg.uid,msg.serverid,msg.roomid);
     } */
-    return this.getAllRoomData();
+    return {};
 }
 
 
